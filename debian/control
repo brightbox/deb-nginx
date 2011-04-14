@@ -14,7 +14,8 @@ Build-Depends: debhelper (>= 7),
                libpcre3-dev,
                libperl-dev,
                libxslt1-dev,
-               zlib1g-dev
+               zlib1g-dev,
+               passenger-dev (= 3.0.7-1bbox2)
 Standards-Version: 3.9.1
 Homepage: http://nginx.net
 Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/nginx/trunk
@@ -59,7 +60,7 @@ Description: small, but very powerful and efficient web server (common files)
 
 Package: nginx-full
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version})
+Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version}), passenger-common (= 3.0.7-1bbox2)
 Provides: httpd, nginx
 Conflicts: nginx-light, nginx-extras
 Description: nginx web server with full set of core modules
@@ -82,7 +83,7 @@ Description: nginx web server with full set of core modules
  Mail Modules:
    Mail Core, POP3, IMAP, SMTP, SSL
  Third Party Modules:
-   Upstream Fair Queue, Echo
+   Upstream Fair Queue, Echo, Passenger
 
 Package: nginx-full-dbg
 Architecture: any
@@ -140,7 +141,7 @@ Description: Debugging symbols for nginx (light)
 
 Package: nginx-extras
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends}, nginx-common (= ${source:Version})
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends}, nginx-common (= ${source:Version}), passenger-common (= 3.0.7-1bbox2)
 Provides: httpd, nginx
 Conflicts: nginx-full, nginx-light
 Description: nginx web server with full set of core modules and extras
@@ -167,7 +168,7 @@ Description: nginx web server with full set of core modules and extras
  Mail Modules:
    Mail Core, POP3, IMAP, SMTP, SSL
  Third Party Modules:
-   Upstream Fair Queue, Echo, Embedded Lua, Nginx Development Kit
+   Upstream Fair Queue, Echo, Embedded Lua, Nginx Development Kit, Passenger
 
 Package: nginx-extras-dbg
 Architecture: any

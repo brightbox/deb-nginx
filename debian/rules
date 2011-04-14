@@ -75,6 +75,7 @@ config.status.full: config.env.full config.sub config.guess
 	    --with-mail_ssl_module \
 	    --add-module=$(MODULESDIR)/nginx-echo \
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
+	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 
@@ -146,6 +147,7 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-echo \
 	    --add-module=$(MODULESDIR)/nginx-lua \
 	    --add-module=$(MODULESDIR)/nginx-http-push \
+	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 

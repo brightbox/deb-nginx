@@ -1,0 +1,1 @@
+nginx-full: binary-without-manpage usr/sbin/nginx

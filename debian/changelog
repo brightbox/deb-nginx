@@ -1,3 +1,9 @@
+nginx (1:1.0.0-1bbox1) lucid; urgency=low
+
+  * Added support for passenger 3.0.7
+
+ -- John Leach <john@brightbox.co.uk>  Fri, 15 Apr 2011 11:48:13 +0100
+
 nginx (1.0.0-1) unstable; urgency=low
 
   [Kartik Mistry]

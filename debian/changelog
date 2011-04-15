@@ -1,3 +1,10 @@
+nginx (1:1.0.0-1bbox2) lucid; urgency=low
+
+  * Changed dependencies to work with Launchpad recipe built passenger
+    packages
+
+ -- John Leach <john@brightbox.co.uk>  Fri, 15 Apr 2011 14:39:00 +0100
+
 nginx (1:1.0.0-1bbox1) lucid; urgency=low
 
   * Added support for passenger 3.0.7

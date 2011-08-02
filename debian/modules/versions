@@ -6,12 +6,12 @@ nginx-development-kit
 nginx-echo
   https://github.com/agentzh/echo-nginx-module/downloads
   https://github.com/agentzh/echo-nginx-module.git
-  v0.36rc2.tar.gz
+  v0.37rc1
 
 nginx-lua
   http://github.com/chaoslawful/lua-nginx-module/downloads
   https://github.com/chaoslawful/lua-nginx-module.git
-  v0.1.6rc2.tar.gz
+ v0.2.1rc2
 
 nginx-upstream-fair
   https://github.com/gnosek/nginx-upstream-fair
@@ -21,3 +21,8 @@ nginx-upstream-fair
 nginx-push
   http://pushmodule.slact.net/#download
   http://pushmodule.slact.net/downloads/nginx_http_push_module-0.692.tar.gz
+
+nginx-upload-progress
+  https://github.com/masterzen/nginx-upload-progress-module/downloads
+  https://download.github.com/masterzen-nginx-upload-progress-module-v0.8.2-0-g8b55a34.tar.gz
+  rm -r debian/nginx-upload-progress/test

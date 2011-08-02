@@ -1,15 +1,64 @@
-nginx (1:1.0.0-1bbox2) lucid; urgency=low
+nginx (1.1.0-1) unstable; urgency=low
 
-  * Changed dependencies to work with Launchpad recipe built passenger
-    packages
+  * New upstream release
+  * debian/control:
+    + Added 'Upload Progress' module in long description of nginx-extras
+      (Closes: #635313)
+  * debian/rules, debian/modules:
+    + Removed deprecated module: nginx-secure-download
+  * debian/modules:
+    + Updated nginx-lua module to version: v0.2.1rc2
+    + Updated nginx-echo module to version: v0.37rc1
 
- -- John Leach <john@brightbox.co.uk>  Fri, 15 Apr 2011 14:39:00 +0100
+ -- Kartik Mistry <kartik@debian.org>  Tue, 02 Aug 2011 23:40:39 +0530
 
-nginx (1:1.0.0-1bbox1) lucid; urgency=low
+nginx (1.0.5-1) unstable; urgency=low
 
-  * Added support for passenger 3.0.7
+  * New upstream release
+  * debian/control:
+    + nginx Depends on either nginx-full or nginx-light, Thanks to
+      Hans van Kranenburg <hans.van.kranenburg@mendix.com> (Closes: #633879)
+  * debian/copyright:
+    + Updated to latest DEP-5 specification
+    + Added some missing copyrights for modules
+    + Updated copyright years
 
- -- John Leach <john@brightbox.co.uk>  Fri, 15 Apr 2011 11:48:13 +0100
+ -- Kartik Mistry <kartik@debian.org>  Wed, 20 Jul 2011 10:16:45 +0530
+
+nginx (1.0.4-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/*.lintian-overrides, debian/rules:
+    + Removed unused lintian for missing manpages
+
+ -- Kartik Mistry <kartik@debian.org>  Wed, 01 Jun 2011 19:12:25 +0530
+
+nginx (1.0.1-1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules:
+    + Removed if surrounding copy of man/ as it is required for builds.
+    + Added nginx-upload-progress to nginx-extras. (Closes: #618306)
+    + Added nginx-secure-downloads to nginx-extras. (Closes: #622268)
+    + Added --prefix to configure command. (Closes: #619482)
+  * debian/modules:
+    + Added nginx-upload-progress/*.
+    + Added nginx-secure-download/*.
+    + Updated nginx-lua/*.
+    + Updated versions.
+  * debian/control:
+    + Added libmhash-dev build dependency.
+    + Updated Standards-Version to 3.9.1.
+
+ -- Michael Lustfield <mtecknology@ubuntu.com>  Mon, 09 May 2011 00:36:54 +0530
+
+nginx (1.0.0-2) unstable; urgency=low
+
+  * debian/rules:
+    + Removed --with-file-aio support. Fixed FTBFS on kFreeBSD-* arch
+      (Closes: #621882)
+
+ -- Kartik Mistry <kartik@debian.org>  Sat, 16 Apr 2011 13:47:58 +0530
 
 nginx (1.0.0-1) unstable; urgency=low
 

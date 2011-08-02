@@ -3,12 +3,14 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-repeat_each(2);
+#repeat_each(2);
 
 plan tests => blocks() * repeat_each() * 2;
 
 #no_diff();
 #no_long_string();
+
+$ENV{TEST_NGINX_MEMCACHED_PORT} ||= 11211;
 
 run_tests();
 
@@ -173,4 +175,204 @@ Hello a=Yichun&b=Zhang
 GET /read
 --- response_body
 Hello 
+
+
+
+=== TEST 10: exec after location capture (simple echo)
+--- config
+    location /test {
+        content_by_lua_file 'html/test.lua';
+    }
+
+    location /a {
+        echo "hello";
+    }
+
+    location /b {
+        echo "hello";
+    }
+
+--- user_files
+>>> test.lua
+ngx.location.capture('/a')
+
+ngx.exec('/b')
+--- request
+    GET /test
+--- response_body
+hello
+
+
+
+=== TEST 11: exec after location capture (memc)
+--- config
+    location /test {
+        content_by_lua_file 'html/test.lua';
+    }
+
+    location /a {
+        set $memc_key 'hello world';
+        set $memc_value 'hello hello hello world world world';
+        set $memc_cmd set;
+        memc_pass 127.0.0.1:$TEST_NGINX_MEMCACHED_PORT;
+    }
+
+    location /b {
+        set $memc_key 'hello world';
+        set $memc_cmd get;
+        memc_pass 127.0.0.1:$TEST_NGINX_MEMCACHED_PORT;
+    }
+
+--- user_files
+>>> test.lua
+ngx.location.capture('/a')
+
+ngx.exec('/b')
+--- request
+    GET /test
+--- response_body: hello hello hello world world world
+
+
+
+=== TEST 12: exec after named location capture (simple echo)
+--- config
+    location /test {
+        content_by_lua_file 'html/test.lua';
+    }
+
+    location /a {
+        echo "hello";
+    }
+
+    location @b {
+        echo "hello";
+    }
+
+--- user_files
+>>> test.lua
+ngx.location.capture('/a')
+
+ngx.exec('@b')
+--- request
+    GET /test
+--- response_body
+hello
+
+
+
+=== TEST 13: exec after named location capture (memc)
+--- config
+    location /test {
+        content_by_lua_file 'html/test.lua';
+    }
+
+    location /a {
+        set $memc_key 'hello world';
+        set $memc_value 'hello hello hello world world world';
+        set $memc_cmd set;
+        memc_pass 127.0.0.1:$TEST_NGINX_MEMCACHED_PORT;
+    }
+
+    location @b {
+        set $memc_key 'hello world';
+        set $memc_cmd get;
+        memc_pass 127.0.0.1:$TEST_NGINX_MEMCACHED_PORT;
+    }
+
+--- user_files
+>>> test.lua
+ngx.location.capture('/a')
+
+ngx.exec('@b')
+--- request
+    GET /test
+--- response_body: hello hello hello world world world
+
+
+
+=== TEST 14: github issue #40: 2 Subrequest calls when using access_by_lua, ngx.exec and echo_location (content)
+--- config
+    location = /hi {
+        echo hello;
+    }
+    location /sub {
+        proxy_pass http://127.0.0.1:$server_port/hi;
+        #echo hello;
+    }
+    location /p{
+        #content_by_lua '
+            #local res = ngx.location.capture("/sub")
+            #ngx.print(res.body)
+        #';
+        echo_location /sub;
+    }
+    location /lua {
+        content_by_lua '
+            ngx.exec("/p")
+        ';
+    }
+--- request
+    GET /lua
+--- response_body
+hello
+
+
+
+=== TEST 15: github issue #40: 2 Subrequest calls when using access_by_lua, ngx.exec and echo_location (content + named location)
+--- config
+    location = /hi {
+        echo hello;
+    }
+    location /sub {
+        proxy_pass http://127.0.0.1:$server_port/hi;
+        #echo hello;
+    }
+    location @p {
+        #content_by_lua '
+            #local res = ngx.location.capture("/sub")
+            #ngx.print(res.body)
+        #';
+        echo_location /sub;
+    }
+    location /lua {
+        content_by_lua '
+            ngx.exec("@p")
+        ';
+    }
+--- request
+    GET /lua
+--- response_body
+hello
+
+
+
+=== TEST 16: github issue #40: 2 Subrequest calls when using access_by_lua, ngx.exec and echo_location (content + post subrequest)
+--- config
+    location = /hi {
+        echo hello;
+    }
+    location /sub {
+        proxy_pass http://127.0.0.1:$server_port/hi;
+        #echo hello;
+    }
+    location /p{
+        #content_by_lua '
+            #local res = ngx.location.capture("/sub")
+            #ngx.print(res.body)
+        #';
+        echo_location /sub;
+    }
+    location blah {
+        echo blah;
+    }
+    location /lua {
+        content_by_lua '
+            ngx.location.capture("/blah")
+            ngx.exec("/p")
+        ';
+    }
+--- request
+    GET /lua
+--- response_body
+hello
 

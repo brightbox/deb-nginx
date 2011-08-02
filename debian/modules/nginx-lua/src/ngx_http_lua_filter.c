@@ -2,8 +2,10 @@
 
 #define DDEBUG 0
 
+#include <nginx.h>
 #include "ngx_http_lua_filter.h"
 #include "ngx_http_lua_util.h"
+#include "ngx_http_lua_hook.h"
 
 
 ngx_http_output_header_filter_pt ngx_http_lua_next_header_filter;
@@ -32,10 +34,41 @@ ngx_http_lua_filter_init(ngx_conf_t *cf)
 static ngx_int_t
 ngx_http_lua_header_filter(ngx_http_request_t *r)
 {
+    ngx_http_post_subrequest_t      *ps;
+    ngx_http_lua_ctx_t              *old_ctx;
+
     ngx_http_lua_ctx_t *ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
+
+    dd("old ctx: %p", ctx);
+
+    if (ctx == NULL || ! ctx->capture) {
+        ps = r->post_subrequest;
+        if (ps != NULL && ps->handler == ngx_http_lua_post_subrequest &&
+                ps->data != NULL)
+        {
+            /* the lua ctx has been cleared by ngx_http_internal_redirect,
+             * resume it from the post_subrequest data
+             */
+            old_ctx = ps->data;
+
+            if (ctx == NULL) {
+                ctx = old_ctx;
+                ngx_http_set_ctx(r, ctx, ngx_http_lua_module);
+
+            } else {
+                dd("restoring ctx...%d %d", (int) old_ctx->capture,
+                        (int) old_ctx->index);
+
+                ctx->capture = old_ctx->capture;
+                ctx->index = old_ctx->index;
+                ps->data = ctx;
+            }
+        }
+    }
 
     if (ctx && ctx->capture) {
         /* force subrequest response body buffer in memory */
+        dd("ctx and capture!");
         r->filter_need_in_memory = 1;
 
         return NGX_OK;
@@ -67,6 +100,7 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     }
 
     if (ctx->run_post_subrequest) {
+        dd("already run post_subrequest");
         return NGX_OK;
     }
 
@@ -79,6 +113,7 @@ ngx_http_lua_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
         return NGX_ERROR;
     }
 
+    dd("restoring the body data");
     rc = ngx_http_lua_add_copy_chain(r, pr_ctx, &ctx->body, in);
 
     if (rc != NGX_OK) {

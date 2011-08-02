@@ -3,7 +3,7 @@
 use lib 'lib';
 use Test::Nginx::Socket;
 
-plan tests => 2 * blocks() - 1;
+plan tests => 2 * blocks();
 
 run_tests();
 
@@ -300,11 +300,11 @@ post main
     }
 --- request
     GET /unsafe
---- error_code: 500
+--- response_body_like: 500 Internal Server Error
 
 
 
-=== TEST 17: access/deny
+=== TEST 17: access/deny (access phase handlers skipped in subrequests)
 --- config
     location /main {
         echo_location_async /denied;
@@ -315,9 +315,9 @@ post main
     }
 --- request
     GET /main
---- error_code: 403
+--- error_code: 200
 --- response_body
---- SKIP
+No no no
 
 
 
@@ -351,4 +351,61 @@ POST /main
 hello, body!
 --- response_body chomp
 hello, body!
+
+
+
+=== TEST 20: leading subrequest & echo_before_body
+--- config
+    location /main {
+        echo_before_body hello;
+        echo_location_async /foo;
+    }
+    location /foo {
+        echo world;
+    }
+--- request
+    GET /main
+--- response_body
+hello
+world
+
+
+
+=== TEST 21: leading subrequest & xss
+--- config
+    location /main {
+        default_type 'application/json';
+        xss_get on;
+        xss_callback_arg c;
+        echo_location_async /foo;
+    }
+    location /foo {
+        echo -n world;
+    }
+--- request
+    GET /main?c=hi
+--- response_body chop
+hi(world);
+
+
+
+=== TEST 22: multiple leading subrequest & xss
+--- config
+    location /main {
+        default_type 'application/json';
+        xss_get on;
+        xss_callback_arg c;
+        echo_location_async /foo;
+        echo_location_async /bar;
+    }
+    location /foo {
+        echo -n world;
+    }
+    location /bar {
+        echo -n ' people';
+    }
+--- request
+    GET /main?c=hi
+--- response_body chop
+hi(world people);
 

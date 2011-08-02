@@ -10,27 +10,28 @@ Build-Depends: debhelper (>= 7),
                libgd2-noxpm-dev,
                libgeoip-dev,
                liblua5.1-dev,
+               libmhash-dev,
                libssl-dev,
                libpcre3-dev,
                libperl-dev,
                libxslt1-dev,
-               zlib1g-dev,
-               passenger-dev (>= 3.0.7), passenger-dev (<< 3.0.8)
-Standards-Version: 3.9.1
+               zlib1g-dev
+Standards-Version: 3.9.2
 Homepage: http://nginx.net
 Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/nginx/trunk
 Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/nginx/trunk
 
 Package: nginx
 Architecture: all
-Depends: ${misc:Depends}, nginx-full
+Depends: ${misc:Depends}, nginx-full | nginx-light
 Description: small, but very powerful and efficient web server and mail proxy
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
  and as a reverse proxy server before some Apache or another big server to
  reduce load to backend servers by many concurrent HTTP-sessions.
  .
- This is a dummy package that selects nginx-full.
+ This is a dummy package that selects nginx-full by default, but also can be
+ installed with nginx-light for upgrading to nginx-light directly.
 
 Package: nginx-doc
 Architecture: all
@@ -60,7 +61,7 @@ Description: small, but very powerful and efficient web server (common files)
 
 Package: nginx-full
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version}), passenger-common (>= 3.0.7), passenger-common (<< 3.0.8)
+Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version})
 Provides: httpd, nginx
 Conflicts: nginx-light, nginx-extras
 Description: nginx web server with full set of core modules
@@ -83,7 +84,7 @@ Description: nginx web server with full set of core modules
  Mail Modules:
    Mail Core, POP3, IMAP, SMTP, SSL
  Third Party Modules:
-   Upstream Fair Queue, Echo, Passenger
+   Echo, Upstream Fair Queue
 
 Package: nginx-full-dbg
 Architecture: any
@@ -141,7 +142,7 @@ Description: Debugging symbols for nginx (light)
 
 Package: nginx-extras
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends}, nginx-common (= ${source:Version}), passenger-common (>= 3.0.7), passenger-common (<< 3.0.8)
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends}, nginx-common (= ${source:Version})
 Provides: httpd, nginx
 Conflicts: nginx-full, nginx-light
 Description: nginx web server with full set of core modules and extras
@@ -168,7 +169,8 @@ Description: nginx web server with full set of core modules and extras
  Mail Modules:
    Mail Core, POP3, IMAP, SMTP, SSL
  Third Party Modules:
-   Upstream Fair Queue, Echo, Embedded Lua, Nginx Development Kit, Passenger
+   Echo, Embedded Lua, Nginx Development Kit, Upload Progress,
+   Upstream Fair Queue
 
 Package: nginx-extras-dbg
 Architecture: any

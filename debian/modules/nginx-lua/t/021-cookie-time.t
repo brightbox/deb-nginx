@@ -29,3 +29,18 @@ GET /lua
 --- response_body
 Thu, 18-Nov-10 11:27:35 GMT
 
+
+
+=== TEST 2: cookie_time in set_by_lua
+--- config
+    location /lua {
+        set_by_lua $a '
+            return ngx.cookie_time(1290079655)
+        ';
+        echo $a;
+    }
+--- request
+GET /lua
+--- response_body
+Thu, 18-Nov-10 11:27:35 GMT
+

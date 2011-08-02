@@ -2,7 +2,7 @@
 
 #define DDEBUG 0
 
-#include "nginx.h"
+#include <nginx.h>
 #include "ngx_http_lua_rewriteby.h"
 #include "ngx_http_lua_util.h"
 #include "ngx_http_lua_hook.h"
@@ -130,12 +130,16 @@ ngx_http_lua_rewrite_handler_file(ngx_http_request_t *r)
         return rc;
     }
 
-    if (rc == NGX_DONE) {
+    if (rc == NGX_AGAIN) {
         return NGX_DONE;
     }
 
-    if (rc == NGX_AGAIN) {
-        return NGX_DONE;
+    if (rc == NGX_DONE) {
+        return NGX_OK;
+    }
+
+    if (rc >= NGX_HTTP_OK && rc < NGX_HTTP_SPECIAL_RESPONSE) {
+        return rc;
     }
 
     return NGX_DECLINED;
@@ -222,9 +226,9 @@ ngx_http_lua_rewrite_handler(ngx_http_request_t *r)
     }
 
     if (ctx->entered_rewrite_phase) {
-        dd("calling wev handler");
+        dd("rewriteby: calling wev handler");
         rc = ngx_http_lua_wev_handler(r);
-        dd("wev handler returns %d", (int) rc);
+        dd("rewriteby: wev handler returns %d", (int) rc);
         return rc;
     }
 
@@ -290,13 +294,19 @@ ngx_http_lua_rewrite_handler_inline(ngx_http_request_t *r)
         return rc;
     }
 
-    if (rc == NGX_DONE) {
-        return NGX_DONE;
-    }
-
     if (rc == NGX_AGAIN) {
         return NGX_DONE;
     }
+
+    if (rc == NGX_DONE) {
+        return NGX_OK;
+    }
+
+    if (rc >= NGX_HTTP_OK && rc < NGX_HTTP_SPECIAL_RESPONSE) {
+        return rc;
+    }
+
+    dd("returning declined...");
 
     return NGX_DECLINED;
 }

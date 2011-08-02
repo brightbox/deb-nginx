@@ -25,22 +25,22 @@ END
         exit 1
     fi
 
-	case "$NGX_PLATFORM" in
-		Darwin:*)
-			case "$NGX_MACHINE" in
-				amd64 | x86_64)
-					echo "adding extra linking options needed by LuaJIT"
-					ngx_feature_libs="$ngx_feature_libs -pagezero_size 10000 -image_base 100000000"
-				;;
+    case "$NGX_PLATFORM" in
+        Darwin:*)
+            case "$NGX_MACHINE" in
+                amd64 | x86_64 | i386)
+                    echo "adding extra linking options needed by LuaJIT"
+                    ngx_feature_libs="$ngx_feature_libs -pagezero_size 10000 -image_base 100000000"
+                ;;
 
-				*)
-				;;
-			esac
-		;;
+                *)
+                ;;
+            esac
+        ;;
 
-		*)
-		;;
-	esac
+        *)
+        ;;
+    esac
 else
     if [ -n "$LUA_INC" -o -n "$LUA_LIB" ]; then
         # explicit set lua lib path
@@ -140,8 +140,8 @@ fi
 
 ngx_addon_name=ngx_http_lua_module
 HTTP_AUX_FILTER_MODULES="$HTTP_AUX_FILTER_MODULES ngx_http_lua_module"
-NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_http_lua_module.c $ngx_addon_dir/src/ngx_http_lua_headers.c $ngx_addon_dir/src/ngx_http_lua_directive.c $ngx_addon_dir/src/ngx_http_lua_hook.c $ngx_addon_dir/src/ngx_http_lua_util.c $ngx_addon_dir/src/ngx_http_lua_cache.c $ngx_addon_dir/src/ngx_http_lua_conf.c $ngx_addon_dir/src/ngx_http_lua_contentby.c $ngx_addon_dir/src/ngx_http_lua_rewriteby.c $ngx_addon_dir/src/ngx_http_lua_accessby.c $ngx_addon_dir/src/ngx_http_lua_setby.c $ngx_addon_dir/src/ngx_http_lua_filter.c $ngx_addon_dir/src/ngx_http_lua_clfactory.c"
-NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/src/ddebug.h $ngx_addon_dir/src/ngx_http_lua_common.h $ngx_addon_dir/src/ngx_http_lua_directive.h $ngx_addon_dir/src/ngx_http_lua_headers.h $ngx_addon_dir/src/ngx_http_lua_hook.h $ngx_addon_dir/src/ngx_http_lua_util.h $ngx_addon_dir/src/ngx_http_lua_cache.h $ngx_addon_dir/src/ngx_http_lua_conf.h $ngx_addon_dir/src/ngx_http_lua_contentby.h $ngx_addon_dir/src/ngx_http_lua_rewriteby.h $ngx_addon_dir/src/ngx_http_lua_accessby.h $ngx_addon_dir/src/ngx_http_lua_setby.h $ngx_addon_dir/src/ngx_http_lua_filter.h $ngx_addon_dir/src/ngx_http_lua_clfactory.h"
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/src/ngx_http_lua_module.c $ngx_addon_dir/src/ngx_http_lua_headers_out.c $ngx_addon_dir/src/ngx_http_lua_headers_in.c $ngx_addon_dir/src/ngx_http_lua_directive.c $ngx_addon_dir/src/ngx_http_lua_hook.c $ngx_addon_dir/src/ngx_http_lua_util.c $ngx_addon_dir/src/ngx_http_lua_cache.c $ngx_addon_dir/src/ngx_http_lua_conf.c $ngx_addon_dir/src/ngx_http_lua_contentby.c $ngx_addon_dir/src/ngx_http_lua_rewriteby.c $ngx_addon_dir/src/ngx_http_lua_accessby.c $ngx_addon_dir/src/ngx_http_lua_setby.c $ngx_addon_dir/src/ngx_http_lua_filter.c $ngx_addon_dir/src/ngx_http_lua_clfactory.c $ngx_addon_dir/src/ngx_http_lua_patch.c"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/src/ddebug.h $ngx_addon_dir/src/ngx_http_lua_common.h $ngx_addon_dir/src/ngx_http_lua_directive.h $ngx_addon_dir/src/ngx_http_lua_headers_out.h $ngx_addon_dir/src/ngx_http_lua_headers_in.h $ngx_addon_dir/src/ngx_http_lua_hook.h $ngx_addon_dir/src/ngx_http_lua_util.h $ngx_addon_dir/src/ngx_http_lua_cache.h $ngx_addon_dir/src/ngx_http_lua_conf.h $ngx_addon_dir/src/ngx_http_lua_contentby.h $ngx_addon_dir/src/ngx_http_lua_rewriteby.h $ngx_addon_dir/src/ngx_http_lua_accessby.h $ngx_addon_dir/src/ngx_http_lua_setby.h $ngx_addon_dir/src/ngx_http_lua_filter.h $ngx_addon_dir/src/ngx_http_lua_clfactory.h $ngx_addon_dir/src/ngx_http_lua_patch.h"
 CFLAGS="$CFLAGS -DNDK_SET_VAR"
 
 ngx_feature="export symbols by default"
@@ -159,4 +159,7 @@ if [ $ngx_found = yes ]; then
 fi
 
 USE_MD5=YES
+
+#CFLAGS=$"$CFLAGS -DLUA_DEFAULT_PATH='\"/usr/local/openresty/lualib/?.lua\"'"
+#CFLAGS=$"$CFLAGS -DLUA_DEFAULT_CPATH='\"/usr/local/openresty/lualib/?.so\"'"
 

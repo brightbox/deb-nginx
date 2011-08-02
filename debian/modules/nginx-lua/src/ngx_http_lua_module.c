@@ -1,11 +1,17 @@
 /* vim:set ft=c ts=4 sw=4 et fdm=marker: */
 
+#include <nginx.h>
 #include "ngx_http_lua_directive.h"
 #include "ngx_http_lua_conf.h"
 #include "ngx_http_lua_filter.h"
 #include "ngx_http_lua_contentby.h"
 #include "ngx_http_lua_rewriteby.h"
 #include "ngx_http_lua_accessby.h"
+
+
+#if !defined(nginx_version) || nginx_version < 8054
+#error "at least nginx 0.8.54 is required"
+#endif
 
 
 static ngx_int_t ngx_http_lua_init(ngx_conf_t *cf);
@@ -51,6 +57,7 @@ static ngx_command_t ngx_http_lua_cmds[] = {
         NULL
     },
 
+#if defined(NDK) && NDK
     /* set_by_lua $res <inline script> [$arg1 [$arg2 [...]]] */
     {
         ngx_string("set_by_lua"),
@@ -72,6 +79,7 @@ static ngx_command_t ngx_http_lua_cmds[] = {
         0,
         ngx_http_lua_filter_set_by_lua_file
     },
+#endif
 
     /* rewrite_by_lua <inline script> */
     {

@@ -2,7 +2,7 @@
 
 #define DDEBUG 0
 
-#include "nginx.h"
+#include <nginx.h>
 #include "ngx_http_lua_accessby.h"
 #include "ngx_http_lua_util.h"
 #include "ngx_http_lua_hook.h"
@@ -131,12 +131,16 @@ ngx_http_lua_access_handler_file(ngx_http_request_t *r)
         return rc;
     }
 
-    if (rc == NGX_DONE) {
+    if (rc == NGX_AGAIN) {
         return NGX_DONE;
     }
 
-    if (rc == NGX_AGAIN) {
-        return NGX_DONE;
+    if (rc == NGX_DONE) {
+        return NGX_HTTP_OK;
+    }
+
+    if (rc >= NGX_HTTP_OK && rc < NGX_HTTP_SPECIAL_RESPONSE) {
+        return rc;
     }
 
     return NGX_DECLINED;
@@ -226,6 +230,11 @@ ngx_http_lua_access_handler(ngx_http_request_t *r)
         dd("calling wev handler");
         rc = ngx_http_lua_wev_handler(r);
         dd("wev handler returns %d", (int) rc);
+
+        if (rc == NGX_OK) {
+            return NGX_HTTP_OK;
+        }
+
         return rc;
     }
 
@@ -291,12 +300,16 @@ ngx_http_lua_access_handler_inline(ngx_http_request_t *r)
         return rc;
     }
 
-    if (rc == NGX_DONE) {
+    if (rc == NGX_AGAIN) {
         return NGX_DONE;
     }
 
-    if (rc == NGX_AGAIN) {
-        return NGX_DONE;
+    if (rc == NGX_DONE) {
+        return NGX_HTTP_OK;
+    }
+
+    if (rc >= NGX_HTTP_OK && rc < NGX_HTTP_SPECIAL_RESPONSE) {
+        return rc;
     }
 
     return NGX_DECLINED;

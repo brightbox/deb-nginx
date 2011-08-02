@@ -1,8 +1,7 @@
-Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=135
-Name: nginx
-Maintainer: Jose Parrella <joseparrella@cantv.net>
+Format-Specification: http://svn.debian.org/wsvn/dep/web/deps/dep5.mdwn?op=file&rev=175
+Upstream-Name: nginx
 Source: http://nginx.net/
-Upstream Author: Igor Sysoev <igor@sysoev.ru>
+Upstream-Contact: Igor Sysoev <igor@sysoev.ru>
 
 Files: *
 Copyright: © 2002-2010, Igor Sysoev <igor@sysoev.ru>
@@ -33,9 +32,19 @@ Copyright: © 2005, Andrei Nigmatulin
 Files: modules/nginx-upstream-fair/ngx_http_upstream_fair_module.c
 Copyright: © 2007, Igor Sysoev, Grzegorz Nosek
 
+Files: modules/nginx-development-kit/*
+Copyright: © Marcus Clyne
+
+Files: modules/nginx-http-push/*
+Copyright: © 2009, Leo Ponomarev
+
+Files: nginx-upload-progress/ngx_http_uploadprogress_module.c
+Copyright: © 2007, Brice Figureau
+Copyright: © 2002-2007, Igor Sysoev
+
 Files: debian/*
 Copyright: © 2006-2010, Jose Parrella <joseparrella@cantv.net>,
                         Fabio Tranchitella <kobold@debian.org>
-           © 2009-2010, Kartik Mistry <kartik@debian.org>
-           © 2010, Michael Lustfield <mtecknology@ubuntu.com>
+           © 2009-2011, Kartik Mistry <kartik@debian.org>
+           © 2011, Michael Lustfield <mtecknology@ubuntu.com>
 License: Same as upstream license.

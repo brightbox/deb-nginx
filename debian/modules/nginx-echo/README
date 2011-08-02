@@ -6,9 +6,9 @@ Name
     installation instructions.
 
 Version
-    This document describes echo-nginx-module v0.35
-    (<https://github.com/agentzh/echo-nginx-module/downloads >) released on
-    February 7, 2011.
+    This document describes echo-nginx-module v0.36
+    (<https://github.com/agentzh/echo-nginx-module/downloads >) released on 8
+    July 2011.
 
 Synopsis
       location /hello {
@@ -1320,6 +1320,8 @@ Installation
 Compatibility
     The following versions of Nginx should work with this module:
 
+    *   1.0.x (last tested: 1.0.2)
+
     *   0.9.x (last tested: 0.9.4)
 
     *   0.8.x (last tested: 0.8.54)
@@ -1360,6 +1362,19 @@ Modules that use this module for testing
     Please mail me other modules that use "echo" in any form and I'll add
     them to the list above :)
 
+Limitations
+    By design, all of this module's directives do not inherit between nested
+    locations. So nginx's "if" may not be used this way:
+
+        ? location /foo {
+        ?    set $a 32;
+        ?    if ($a = 32) {
+        ?        set $a 56;
+        ?    }
+        ?
+        ?    echo $a;
+        ? }
+
 Report Bugs
     Although a lot of effort has been put into testing and code tuning,
     there must be some serious bugs lurking somewhere in this module. So
@@ -1376,6 +1391,26 @@ Source Repository
     (<http://github.com/agentzh/echo-nginx-module >).
 
 ChangeLog
+  v0.36
+    *   now we back-ported the subrequest mechanism of ngx_lua to ngx_echo.
+        this also helps some crazy test cases of mixing echo_location and
+        echo_location_async pass now.
+
+    *   now echo_location and its friends can work with ngx_xss (as well as
+        other output filter modules) completely. thanks wd for reporting
+        this issue.
+
+    *   done some minor optimization when modifying subrequest's
+        content-length header.
+
+    *   now we always pad a trailing \0 to filepath in
+        "echo_subrequest(_async) METHOD /path -f filepath" because
+        ngx_open_cached_file requires a C string file name. thanks dr-dr xp.
+
+    *   made our filter optimization works with nginx HUP by clearing the
+        ngx_http_echo_filter_used flag at nginx pre-config callback. thanks
+        Marcus Clyne.
+
   v0.35
     *   added the "-f /path/to/file" option to the echo_subrequest and
         echo_subrequest_async directives to allow POST/PUT a disk file in
@@ -1741,8 +1776,8 @@ Copyright & License
 
 See Also
     *   The original blog post
-        (<http://agentzh.blogspot.com/2009/10/hacking-on-nginx-echo-module.html>)
-        about this module's initial development.
+        (<http://agentzh.blogspot.com/2009/10/hacking-on-nginx-echo-module.h
+        tml>) about this module's initial development.
 
     *   The standard addition filter module.
 

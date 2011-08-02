@@ -57,7 +57,6 @@ ngx_http_echo_exec_echo_subrequest_async(ngx_http_request_t *r,
     ngx_str_t                       args;
     ngx_uint_t                      flags = 0;
 
-
     dd_enter();
 
     rc = ngx_http_echo_parse_subrequest_spec(r, computed_args, &parsed_sr);
@@ -151,6 +150,9 @@ ngx_http_echo_exec_echo_subrequest(ngx_http_request_t *r,
     /* set by ngx_http_echo_create_ctx
      *  sr_ctx->run_post_subrequest = 0
      */
+
+    dd("creating sr ctx for %.*s: %p", (int) parsed_sr->location->len,
+            parsed_sr->location->data, sr_ctx);
 
     psr = ngx_palloc(r->pool, sizeof(ngx_http_post_subrequest_t));
 
@@ -418,20 +420,9 @@ ngx_http_echo_adjust_subrequest(ngx_http_request_t *sr,
         sr->headers_in.content_length_n = parsed_sr->content_length_n;
         sr->request_body = parsed_sr->request_body;
 
-        sr->headers_in.content_length = ngx_pcalloc(sr->pool,
-                sizeof(ngx_table_elt_t));
-        sr->headers_in.content_length->value.data =
-            ngx_palloc(sr->pool, NGX_OFF_T_LEN);
-        if (sr->headers_in.content_length->value.data == NULL) {
-            return NGX_HTTP_INTERNAL_SERVER_ERROR;
-        }
-        sr->headers_in.content_length->value.len = ngx_sprintf(
-                sr->headers_in.content_length->value.data, "%O",
-                sr->headers_in.content_length_n) -
-                sr->headers_in.content_length->value.data;
-
         if (ngx_list_init(&sr->headers_in.headers, sr->pool, 20,
-                    sizeof(ngx_table_elt_t)) != NGX_OK) {
+                    sizeof(ngx_table_elt_t)) != NGX_OK)
+        {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
 
@@ -439,6 +430,17 @@ ngx_http_echo_adjust_subrequest(ngx_http_request_t *sr,
         if (h == NULL) {
             return NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
+
+        h->value.data = ngx_palloc(sr->pool, NGX_OFF_T_LEN);
+
+        if (h->value.data == NULL) {
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        h->value.len = ngx_sprintf(h->value.data, "%z",
+                parsed_sr->content_length_n) - h->value.data;
+
+        sr->headers_in.content_length = h;
 
         h->hash = sr->header_hash;
 

@@ -1,8 +1,11 @@
 /* vim:set ft=c ts=4 sw=4 et fdm=marker: */
+
 #define DDEBUG 0
+
 #include "ngx_http_lua_setby.h"
 #include "ngx_http_lua_hook.h"
 #include "ngx_http_lua_util.h"
+#include "ngx_http_lua_patch.h"
 
 
 static int
@@ -140,6 +143,12 @@ ngx_http_lua_set_by_lua_env(lua_State *L, ngx_http_request_t *r, size_t nargs,
     lua_pushcfunction(L, ngx_http_lua_ngx_today);
     lua_setfield(L, -2, "today");
 
+    lua_pushcfunction(L, ngx_http_lua_ngx_http_time);
+    lua_setfield(L, -2, "http_time");
+
+	lua_pushcfunction(L, ngx_http_lua_ngx_parse_http_time);
+    lua_setfield(L, -2, "parse_http_time");
+
     lua_pushcfunction(L, ngx_http_lua_ngx_cookie_time);
     lua_setfield(L, -2, "cookie_time");
 
@@ -147,6 +156,14 @@ ngx_http_lua_set_by_lua_env(lua_State *L, ngx_http_request_t *r, size_t nargs,
     lua_setfield(L, -2, "log");
 
     ngx_http_lua_inject_log_consts(L);
+
+    /* ngx. getter and setter */
+    lua_createtable(L, 0, 2); /* metatable for .ngx */
+    lua_pushcfunction(L, ngx_http_lua_ngx_get);
+    lua_setfield(L, -2, "__index");
+    lua_pushcfunction(L, ngx_http_lua_ngx_set);
+    lua_setfield(L, -2, "__newindex");
+    lua_setmetatable(L, -2);
 
     lua_setfield(L, -2, "ngx");
     /*  }}} */
@@ -166,8 +183,11 @@ ngx_int_t
 ngx_http_lua_set_by_chunk(lua_State *L, ngx_http_request_t *r, ngx_str_t *val,
         ngx_http_variable_value_t *args, size_t nargs)
 {
-    size_t i;
-    ngx_int_t rc;
+    size_t           i;
+    ngx_int_t        rc;
+    u_char          *err_msg;
+    size_t           rlen;
+    u_char          *rdata;
 
     /*  set Lua VM panic handler */
     lua_atpanic(L, ngx_http_lua_atpanic);
@@ -180,23 +200,35 @@ ngx_http_lua_set_by_chunk(lua_State *L, ngx_http_request_t *r, ngx_str_t *val,
         lua_pushlstring(L, (const char *) args[i].data, args[i].len);
     }
 
+#if (NGX_PCRE)
+    /* XXX: work-around to nginx regex subsystem */
+    ngx_http_lua_pcre_malloc_init(r->pool);
+#endif
+
     /*  protected call user code */
     rc = lua_pcall(L, nargs, 1, 0);
-    if (rc) {
-        /*  error occured when running loaded code */
-        const char *err_msg = lua_tostring(L, -1);
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "(lua-error) %s",
-                err_msg);
 
-        lua_settop(L, 0);    /*  clear remaining elems on stack */
-        assert(lua_gettop(L) == 0);
+#if (NGX_PCRE)
+    /* XXX: work-around to nginx regex subsystem */
+    ngx_http_lua_pcre_malloc_done();
+#endif
+
+    if (rc != 0) {
+        /*  error occured when running loaded code */
+        err_msg = (u_char *) lua_tostring(L, -1);
+
+        if (err_msg != NULL) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "(lua-error) %s",
+                    err_msg);
+
+            lua_settop(L, 0);    /*  clear remaining elems on stack */
+        }
 
         return NGX_ERROR;
     }
 
     NGX_LUA_EXCEPTION_TRY {
-        size_t rlen;
-        const char *rdata = lua_tolstring(L, -1, &rlen);
+        rdata = (u_char *) lua_tolstring(L, -1, &rlen);
 
         if (rdata) {
             val->data = ngx_pcalloc(r->pool, rlen);
@@ -211,6 +243,7 @@ ngx_http_lua_set_by_chunk(lua_State *L, ngx_http_request_t *r, ngx_str_t *val,
             val->data = NULL;
             val->len = 0;
         }
+
     } NGX_LUA_EXCEPTION_CATCH {
         dd("nginx execution restored");
     }

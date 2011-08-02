@@ -41,12 +41,11 @@ config.env.%:
 	cp -Pa $(CURDIR)/configure $(BUILDDIR_$*)/
 	cp -Pa $(CURDIR)/contrib $(BUILDDIR_$*)/
 	cp -Pa $(CURDIR)/src $(BUILDDIR_$*)/
-ifneq "$(wildcard $(CURDIR)/man)" ""
 	cp -Pa $(CURDIR)/man $(BUILDDIR_$*)/
-endif
 
 config.status.full: config.env.full config.sub config.guess
 	cd $(BUILDDIR_full) && ./configure \
+	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
 	    --error-log-path=/var/log/nginx/error.log \
 	    --http-client-body-temp-path=/var/lib/nginx/body \
@@ -75,12 +74,12 @@ config.status.full: config.env.full config.sub config.guess
 	    --with-mail_ssl_module \
 	    --add-module=$(MODULESDIR)/nginx-echo \
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
-	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 
 config.status.light: config.env.light config.sub config.guess
 	cd $(BUILDDIR_light) && ./configure \
+	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
 	    --error-log-path=/var/log/nginx/error.log \
 	    --http-client-body-temp-path=/var/lib/nginx/body \
@@ -111,6 +110,7 @@ config.status.light: config.env.light config.sub config.guess
 
 config.status.extras: config.env.extras config.sub config.guess
 	cd $(BUILDDIR_extras) && ./configure \
+	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
 	    --error-log-path=/var/log/nginx/error.log \
 	    --http-client-body-temp-path=/var/lib/nginx/body \
@@ -122,7 +122,6 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --lock-path=/var/lock/nginx.lock \
 	    --pid-path=/var/run/nginx.pid \
 	    --with-debug \
-	    --with-file-aio \
 	    --with-http_addition_module \
 	    --with-http_dav_module \
 	    --with-http_flv_module \
@@ -147,7 +146,7 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-echo \
 	    --add-module=$(MODULESDIR)/nginx-lua \
 	    --add-module=$(MODULESDIR)/nginx-http-push \
-	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
+	    --add-module=$(MODULESDIR)/nginx-upload-progress \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 
@@ -215,7 +214,6 @@ binary-arch: install build-dbg
 	dh_installchangelogs -a -k CHANGES
 	dh_installdocs -a
 	dh_link -aA
-	dh_lintian -a
 	dh_compress -a
 	dh_perl -a
 	dh_fixperms -a

@@ -50,7 +50,7 @@ typedef struct {
     time_t                           expire;
     time_t                           valid_sec;
     size_t                           body_start;
-    off_t                            length;
+    off_t                            fs_size;
 } ngx_http_file_cache_node_t;
 
 
@@ -68,6 +68,7 @@ struct ngx_http_cache_s {
     size_t                           header_start;
     size_t                           body_start;
     off_t                            length;
+    off_t                            fs_size;
 
     ngx_uint_t                       min_uses;
     ngx_uint_t                       error;
@@ -117,8 +118,11 @@ struct ngx_http_file_cache_s {
 
     time_t                           inactive;
 
-    ngx_msec_t                       last;
     ngx_uint_t                       files;
+    ngx_uint_t                       loader_files;
+    ngx_msec_t                       last;
+    ngx_msec_t                       loader_sleep;
+    ngx_msec_t                       loader_threshold;
 
     ngx_shm_zone_t                  *shm_zone;
 };

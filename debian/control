@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 7),
                libperl-dev,
                libxslt1-dev,
                zlib1g-dev,
-               passenger-dev (>= 3.0.8), passenger-dev (<< 3.0.9)
+               passenger-dev (>= 3.0.9), passenger-dev (<< 3.0.10)
 Standards-Version: 3.9.2
 Homepage: http://nginx.net
 Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/nginx/trunk
@@ -63,7 +63,7 @@ Description: small, but very powerful and efficient web server (common files)
 Package: nginx-full
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version}), 
- passenger-common (>= 3.0.8), passenger-common (<< 3.0.9)
+ passenger-common (>= 3.0.9), passenger-common (<< 3.0.10)
 Provides: httpd, nginx
 Conflicts: nginx-light, nginx-extras
 Description: nginx web server with full set of core modules
@@ -145,7 +145,7 @@ Description: Debugging symbols for nginx (light)
 Package: nginx-extras
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends}, nginx-common (= ${source:Version}),
- passenger-common (>= 3.0.8), passenger-common (<< 3.0.9)
+ passenger-common (>= 3.0.9), passenger-common (<< 3.0.10)
 Provides: httpd, nginx
 Conflicts: nginx-full, nginx-light
 Description: nginx web server with full set of core modules and extras

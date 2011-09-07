@@ -1,3 +1,9 @@
+nginx (1:1.1.0-1bbox2) lucid; urgency=low
+
+  * Upped passenger depends to 3.0.9
+
+ -- John Leach <john@brightbox.co.uk>  Wed, 07 Sep 2011 18:38:11 +0100
+
 nginx (1:1.1.0-1bbox1) lucid; urgency=low
 
   * Added support for passenger 3.0.8

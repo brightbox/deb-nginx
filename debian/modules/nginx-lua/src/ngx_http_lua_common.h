@@ -57,10 +57,14 @@ typedef struct {
 } ngx_http_lua_set_var_data_t;
 #endif
 
+
 typedef struct {
     lua_State       *lua;
     ngx_str_t        lua_path;
     ngx_str_t        lua_cpath;
+    ngx_pool_t      *pool;
+    ngx_int_t        regex_cache_entries;
+    ngx_int_t        regex_cache_max_entries;
 
     unsigned    postponed_to_rewrite_phase_end:1;
     unsigned    postponed_to_access_phase_end:1;
@@ -78,6 +82,7 @@ typedef struct {
     ngx_http_handler_pt     rewrite_handler;
     ngx_http_handler_pt     access_handler;
     ngx_http_handler_pt     content_handler;
+    ngx_http_handler_pt     header_filter_handler;
 
     ngx_http_complex_value_t rewrite_src;    /*  rewrite_by_lua
                                                 inline script/script
@@ -97,13 +102,26 @@ typedef struct {
 
     u_char                 *content_src_key; /* cached key for content_src */
 
+    ngx_http_complex_value_t header_filter_src;    /*  header_filter_by_lua
+                                                inline script/script
+                                                file path */
+
+    u_char                 *header_filter_src_key;
+                                    /* cached key for header_filter_src */
+
+
+
 } ngx_http_lua_loc_conf_t;
 
 
 typedef struct {
     lua_State       *cc;                /*  coroutine to handle request */
-    int              cc_ref;            /*  reference to anchor coroutine
-                                            in lua registry */
+
+    int              cc_ref;            /*  reference to anchor coroutine in
+                                            the lua registry */
+
+    int              ctx_ref;           /*  reference to anchor request ctx
+                                            data in lua registry */
 
     ngx_chain_t             *out;  /* buffered output chain for HTTP 1.0 */
     ngx_chain_t             *free; /* free bufs */
@@ -177,7 +195,7 @@ struct ngx_http_lua_header_val_s {
     ngx_str_t                               key;
     ngx_http_lua_set_header_pt              handler;
     ngx_uint_t                              offset;
-    ngx_flag_t                              no_override;
+    unsigned                                no_override;
 };
 
 typedef struct {
@@ -195,11 +213,19 @@ extern ngx_http_output_body_filter_pt ngx_http_lua_next_body_filter;
 
 /*  user code cache table key in Lua vm registry */
 #define LUA_CODE_CACHE_KEY "ngx_http_lua_code_cache"
+
 /*  coroutine anchoring table key in Lua vm registry */
 #define NGX_LUA_CORT_REF "ngx_lua_cort_ref"
 
+/*  request ctx data anchoring table key in Lua vm registry */
+#define NGX_LUA_REQ_CTX_REF "ngx_lua_req_ctx_ref"
+
+/*  regex cache table key in Lua vm registry */
+#define NGX_LUA_REGEX_CACHE "ngx_lua_regex_cache"
+
 /*  globals symbol to hold nginx request pointer */
 #define GLOBALS_SYMBOL_REQUEST    "ngx._req"
+
 /*  globals symbol to hold code chunk handling nginx request */
 #define GLOBALS_SYMBOL_RUNCODE    "ngx._code"
 

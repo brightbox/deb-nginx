@@ -5,7 +5,7 @@ use Test::Nginx::Socket;
 
 repeat_each(2);
 
-plan tests => blocks() * repeat_each() * 2;
+plan tests => repeat_each() * (blocks() * 2 + 1);
 
 #no_diff();
 #no_long_string();
@@ -59,4 +59,21 @@ GET /read
 GET /read
 --- response_body_like: 500 Internal Server Error
 --- error_code: 500
+
+
+
+=== TEST 4: directive not found
+--- config
+    location /read {
+        header_filter_by_lua '
+            ngx.header.Foo = ndk.set_var.set_escape_uri(" %")
+        ';
+        echo hi;
+    }
+--- request
+GET /read
+--- response_headers
+Foo: %20%25
+--- response_body
+hi
 

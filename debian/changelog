@@ -1,5 +1,92 @@
+nginx (1.1.8-2) unstable; urgency=low
+
+  * debian/modules/chunkin-nginx-module:
+    + Reinclude HttpChunkin Module with new upstream version (closes: #638814)
+  * debian/control:
+    + Add myself to uploaders list.
+
+ -- Dmitry E. Oboukhov <unera@debian.org>  Thu, 24 Nov 2011 14:16:50 +0530
+
+nginx (1.1.8-1) unstable; urgency=low
+
+  [Kartik Mistry]
+  * New upstream release.
+  * debian/modules/chunkin-nginx-module:
+    + Removed as of now, as it breaks with Perl 5.14 (Closes: #649061)
+
+  [Michael Lustfield]
+  * debian/control:
+    + Added Map module to nginx-light modules list.
+  * debian/rules:
+    + Removed --without-http_map_module form nginx-light.
+  * debian/nginx-common.install:
+    + Changed ufw profile installation (LP: #825349).
+      - debian/ufw.profile -> debian/ufw/nginx.
+  * debian/nginx-common.preinst:
+    + Cleanup of moved nginx profile.
+  * debian/conf/nginx.conf:
+    + Added a default map for $server_https (on|off).
+  * debian/conf/fastcgi_params:
+    + Pass HTTPS so $_SERVER['HTTPS'] is set (LP: #857831).
+  * debian/conf/mime.types:
+    + Added json type (LP: #883440).
+  * debian/conf/sites-available/default:
+    + Added notes about PHP (Closes: #642995).
+    + Changed location /doc from root to alias.
+    + Changed location /doc to /doc/ for people that don't bother reading or
+      learning anything about Nginx configuration files (LP: #840358).
+
+ -- Kartik Mistry <kartik@debian.org>  Fri, 18 Nov 2011 23:44:00 +0530
+
+nginx (1.1.4-2) unstable; urgency=low
+
+  [Kartik Mistry]
+  * debian/modules:
+    + Updated nginx-upload-progress module, Thanks to upstream for fixing issue
+      that FTBFS nginx on kFreeBSD-* archs.
+    + Updated nginx-lua module to latest upstream.
+
+ -- Kartik Mistry <kartik@debian.org>  Mon, 26 Sep 2011 10:17:04 +0530
+
+nginx (1.1.4-1) unstable; urgency=low
+
+  [Kartik Mistry]
+  * New upstream release.
+  * debian/rules:
+    + Added 'HTTPStubStatus' module in nginx-light also (Closes: #639661).
+    + Added 'HTTP MP4' module in nginx-extras. (Closes: #642022).
+  * Add new modules, Thanks to Dmitry E. Oboukhov <unera@debian.org>:
+    + NginxHttpHeadersMore Module (closes: #638820).
+    + HttpChunkin Module (closes: #638814).
+  * Renamed debian/modules/versions to debian/modules/README.modules-version,
+    added missing homepage and version information.
+
+ -- Kartik Mistry <kartik@debian.org>  Sun, 25 Sep 2011 13:44:48 +0530
+
+nginx (1.1.2-1) unstable; urgency=low
+
+  [ Kartik Mistry ]
+  * New upstream release
+  * debian/control:
+    + Added missing 'http-push' module in long description of nginx-extras.
+      (Closes: #638924)
+    + Removed 'File AIO' module from description, which we don't provide.
+      (Closes: #639360)
+    + Added 'HTTP Sub Module' in long description of nginx-extras, nginx-full.
+    + Updated Breaks/Replaces fields.
+
+  [ Michael Lustfield ]
+  * debian/copyright:
+    + Updated email address for Michael Lustfield
+  * debian/control:
+    + Updated email address for Michael Lustfield
+    + Updated Breaks on nginx-common to address conflicting versions
+
+ -- Kartik Mistry <kartik@debian.org>  Wed, 07 Sep 2011 12:15:36 +0530
+
 nginx (1.1.0-1) unstable; urgency=low
 
+  [ Kartik Mistry ]
   * New upstream release
   * debian/control:
     + Added 'Upload Progress' module in long description of nginx-extras
@@ -10,7 +97,7 @@ nginx (1.1.0-1) unstable; urgency=low
     + Updated nginx-lua module to version: v0.2.1rc2
     + Updated nginx-echo module to version: v0.37rc1
 
- -- Kartik Mistry <kartik@debian.org>  Tue, 02 Aug 2011 23:40:39 +0530
+ -- Kartik Mistry <kartik@debian.org>  Tue, 02 Aug 2011 20:06:43 +0530
 
 nginx (1.0.5-1) unstable; urgency=low
 

@@ -44,6 +44,9 @@
 #define NGX_HTTP_UPSTREAM_IGN_EXPIRES        0x00000008
 #define NGX_HTTP_UPSTREAM_IGN_CACHE_CONTROL  0x00000010
 #define NGX_HTTP_UPSTREAM_IGN_SET_COOKIE     0x00000020
+#define NGX_HTTP_UPSTREAM_IGN_XA_LIMIT_RATE  0x00000040
+#define NGX_HTTP_UPSTREAM_IGN_XA_BUFFERING   0x00000080
+#define NGX_HTTP_UPSTREAM_IGN_XA_CHARSET     0x00000100
 
 
 typedef struct {
@@ -217,6 +220,7 @@ typedef struct {
     ngx_table_elt_t                 *location;
     ngx_table_elt_t                 *accept_ranges;
     ngx_table_elt_t                 *www_authenticate;
+    ngx_table_elt_t                 *transfer_encoding;
 
 #if (NGX_HTTP_GZIP)
     ngx_table_elt_t                 *content_encoding;
@@ -225,6 +229,9 @@ typedef struct {
     off_t                            content_length_n;
 
     ngx_array_t                      cache_control;
+
+    unsigned                         connection_close:1;
+    unsigned                         chunked:1;
 } ngx_http_upstream_headers_in_t;
 
 
@@ -267,7 +274,7 @@ struct ngx_http_upstream_s {
     ngx_http_upstream_resolved_t    *resolved;
 
     ngx_buf_t                        buffer;
-    size_t                           length;
+    off_t                            length;
 
     ngx_chain_t                     *out_bufs;
     ngx_chain_t                     *busy_bufs;
@@ -308,6 +315,7 @@ struct ngx_http_upstream_s {
 #endif
 
     unsigned                         buffering:1;
+    unsigned                         keepalive:1;
 
     unsigned                         request_sent:1;
     unsigned                         header_sent:1;

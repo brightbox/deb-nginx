@@ -8,6 +8,8 @@
 #define _NGX_DARWIN_CONFIG_H_INCLUDED_
 
 
+#define MAC_OS_X_VERSION_MIN_REQUIRED MAC_OS_X_VERSION_10_0
+
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -85,6 +87,7 @@
 
 
 #define NGX_HAVE_OS_SPECIFIC_INIT    1
+#define NGX_HAVE_DEBUG_MALLOC        1
 
 
 extern char **environ;

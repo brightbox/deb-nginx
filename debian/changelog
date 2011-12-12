@@ -1,3 +1,9 @@
+nginx (1:1.1.8-2bbox1) lucid; urgency=low
+
+  * Passenger 3.0.11 support
+
+ -- John Leach <john@brightbox.co.uk>  Mon, 12 Dec 2011 12:50:24 +0000
+
 nginx (1.1.8-2) unstable; urgency=low
 
   * debian/modules/chunkin-nginx-module:

@@ -17,7 +17,7 @@ plan tests => blocks() * repeat_each() * 2;
 $ENV{TEST_NGINX_MEMCACHED_PORT} ||= 11211;
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 
-#$ENV{LUA_PATH} = $ENV{HOME} . '/work/JSON4Lua-0.9.30/json/?.lua';
+$ENV{LUA_CPATH} ||= '/usr/local/openresty/lualib/?.so;;';
 
 no_long_string();
 
@@ -117,7 +117,6 @@ GET /api?user=agentz
         drizzle_keepalive max=300 mode=single overflow=ignore;
     }
 
-    lua_package_cpath '/home/lz/luax/?.so;/usr/local/lib/lua/5.1/?.so';
 --- config
     location /memc {
         internal;
@@ -152,7 +151,7 @@ GET /api?user=agentz
     }
 --- user_files
 >>> foo.lua
-local yajl = require('yajl');
+local cjson = require('cjson');
 local old_uid = ngx.var.uid
 print('about to run sr')
 local res = ngx.location.capture('/conv-uid-mysql?uid=' .. old_uid)
@@ -160,7 +159,7 @@ print('just have run sr' .. res.body)
 if (res.status ~= ngx.HTTP_OK) then
     -- ngx.exit(res.status)
 end
-res = yajl.to_value(res.body)
+res = cjson.decode(res.body)
 if (not res or not res[1] or not res[1].uid or
         not string.match(res[1].uid, '^%d+$')) then
     ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
@@ -183,7 +182,6 @@ Logged in 56
         drizzle_keepalive max=300 mode=single overflow=ignore;
     }
 
-    lua_package_cpath '/home/lz/luax/?.so;/usr/local/lib/lua/5.1/?.so';
 --- config
     location /memc {
         internal;
@@ -218,7 +216,7 @@ Logged in 56
     }
 --- user_files
 >>> foo.lua
-local yajl = require('yajl');
+local cjson = require('cjson');
 local old_uid = ngx.var.uid
 -- print('about to run sr')
 local res = ngx.location.capture('/conv-uid-mysql?uid=' .. old_uid)
@@ -226,7 +224,7 @@ local res = ngx.location.capture('/conv-uid-mysql?uid=' .. old_uid)
 if (res.status ~= ngx.HTTP_OK) then
     ngx.exit(res.status)
 end
-res = yajl.to_value(res.body)
+res = cjson.decode(res.body)
 if (not res or not res[1] or not res[1].uid or
         not string.match(res[1].uid, '^%d+$')) then
     ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
@@ -258,7 +256,6 @@ Logged in 56
 
     upstream_list memc_cluster memc_a memc_b;
 
-    lua_package_cpath '/home/lz/luax/?.so;/usr/local/lib/lua/5.1/?.so';
 --- config
     location /memc {
         internal;
@@ -294,7 +291,7 @@ Logged in 56
     }
 --- user_files
 >>> foo.lua
-local yajl = require('yajl');
+local cjson = require('cjson');
 local old_uid = ngx.var.uid
 -- print('about to run sr')
 local res = ngx.location.capture('/conv-uid-mysql?uid=' .. old_uid)
@@ -302,7 +299,7 @@ local res = ngx.location.capture('/conv-uid-mysql?uid=' .. old_uid)
 if (res.status ~= ngx.HTTP_OK) then
     ngx.exit(res.status)
 end
-res = yajl.to_value(res.body)
+res = cjson.decode(res.body)
 if (not res or not res[1] or not res[1].uid or
         not string.match(res[1].uid, '^%d+$')) then
     ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
@@ -331,7 +328,6 @@ Logged in 56
 
     #upstream_list memc_cluster memc_a memc_b;
 
-    lua_package_cpath '/home/lz/luax/?.so;/usr/local/lib/lua/5.1/?.so';
 --- config
     location /memc {
         internal;
@@ -379,14 +375,14 @@ Logged in 56
     }
 --- user_files
 >>> foo.lua
-local yajl = require('yajl');
+local cjson = require('cjson');
 local seo_uri = ngx.var.my_uri
 -- print('about to run sr')
 local res = ngx.location.capture('/conv-mysql?' .. seo_uri)
 if (res.status ~= ngx.HTTP_OK) then
     ngx.exit(res.status)
 end
-res = yajl.to_value(res.body)
+res = cjson.decode(res.body)
 if (not res or not res[1] or not res[1].url) then
     ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
 end
@@ -488,4 +484,27 @@ ngx.exit(ngx.HTTP_OK)
 GET /lua
 --- response_body
 morning
+
+
+
+=== TEST 16: error page with custom body
+--- config
+    error_page 410 @err;
+    location @err {
+        echo blah blah;
+    }
+    location /foo {
+        access_by_lua '
+            ngx.status = ngx.HTTP_GONE
+            ngx.say("This is our own content")
+            -- to cause quit the whole request rather than the current phase handler
+            ngx.exit(ngx.HTTP_OK)
+        ';
+        echo Hello;
+    }
+--- request
+    GET /foo
+--- response_body
+This is our own content
+--- error_code: 410
 

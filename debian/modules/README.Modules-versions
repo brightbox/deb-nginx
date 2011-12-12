@@ -1,0 +1,40 @@
+README for Modules versions
+---------------------------
+
+ This file lists third party modules built with nginx in Debian, homepage and
+ version.
+
+ chunkin-nginx-module
+  https://github.com/agentzh/chunkin-nginx-module
+  Version: v0.23rc1-0-g72c3e3f
+
+ headers-more-nginx-module
+  https://github.com/agentzh/headers-more-nginx-module.git
+  Version: b3c6230
+
+ nginx-development-kit
+  https://github.com/agentzh/echo-nginx-module.git
+  Version: 0.2.17rc2.tar.gz
+
+ nginx-echo
+  https://github.com/agentzh/echo-nginx-module.git
+  Version: 0.37rc1
+
+ nginx-lua
+  https://github.com/chaoslawful/lua-nginx-module.git
+  Version: v0.3.1rc8
+
+ nginx-upstream-fair
+  https://github.com/gnosek/nginx-upstream-fair.git
+  Version: 2131c731d00b49c6ac01
+
+ nginx-push
+  http://pushmodule.slact.net/#download
+  http://pushmodule.slact.net/downloads/nginx_http_push_module-0.692.tar.gz
+  Version: 0.692
+
+ nginx-upload-progress
+  https://github.com/masterzen/nginx-upload-progress-module.git
+  https://github.com/masterzen/nginx-upload-progress-module/archives/436ec80547bdc92bd7d9253b1815d4b964009883
+  rm -r debian/nginx-upload-progress/test
+  Version: v0.8.3-1-g436ec80

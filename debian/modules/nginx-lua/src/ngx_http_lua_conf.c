@@ -24,7 +24,11 @@ ngx_http_lua_create_main_conf(ngx_conf_t *cf)
      *      lmcf->lua = NULL;
      *      lmcf->lua_path = { 0, NULL };
      *      lmcf->lua_cpath = { 0, NULL };
+     *      lmcf->regex_cache_entries = 0;
      */
+
+    lmcf->pool = cf->pool;
+    lmcf->regex_cache_max_entries = NGX_CONF_UNSET;
 
     dd("nginx Lua module main config structure initialized!");
 
@@ -36,6 +40,10 @@ char *
 ngx_http_lua_init_main_conf(ngx_conf_t *cf, void *conf)
 {
     ngx_http_lua_main_conf_t *lmcf = conf;
+
+    if (lmcf->regex_cache_max_entries == NGX_CONF_UNSET) {
+        lmcf->regex_cache_max_entries = 1024;
+    }
 
     if (lmcf->lua == NULL) {
         if (ngx_http_lua_init_vm(cf, lmcf) != NGX_CONF_OK) {
@@ -50,7 +58,7 @@ ngx_http_lua_init_main_conf(ngx_conf_t *cf, void *conf)
 }
 
 
-void*
+void *
 ngx_http_lua_create_loc_conf(ngx_conf_t *cf)
 {
     ngx_http_lua_loc_conf_t *conf;
@@ -65,10 +73,15 @@ ngx_http_lua_create_loc_conf(ngx_conf_t *cf)
      *      conf->access_src_key = NULL
      *      conf->rewrite_src = {{ 0, NULL }, NULL, NULL, NULL};
      *      conf->rewrite_src_key = NULL
+     *      conf->rewrite_handler = NULL;
+     *
      *      conf->content_src = {{ 0, NULL }, NULL, NULL, NULL};
      *      conf->content_src_key = NULL
-     *      conf->rewrite_handler = NULL;
      *      conf->content_handler = NULL;
+     *
+     *      conf->header_filter_src = {{ 0, NULL }, NULL, NULL, NULL};
+     *      conf->header_filter_src_key = NULL
+     *      conf->header_filter_handler = NULL;
      */
 
     conf->force_read_body   = NGX_CONF_UNSET;
@@ -100,6 +113,12 @@ ngx_http_lua_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
         conf->content_src = prev->content_src;
         conf->content_handler = prev->content_handler;
         conf->content_src_key = prev->content_src_key;
+    }
+
+    if (conf->header_filter_src.value.len == 0) {
+        conf->header_filter_src = prev->header_filter_src;
+        conf->header_filter_handler = prev->header_filter_handler;
+        conf->header_filter_src_key = prev->header_filter_src_key;
     }
 
     ngx_conf_merge_value(conf->force_read_body, prev->force_read_body, 0);

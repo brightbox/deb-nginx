@@ -10,7 +10,7 @@ use Test::Nginx::Socket;
 repeat_each(2);
 #repeat_each(1);
 
-plan tests => repeat_each() * (blocks() * 2 + 2);
+plan tests => repeat_each() * (blocks() * 2 + 3);
 
 #no_diff();
 #no_long_string();
@@ -160,7 +160,7 @@ status=200 body=hello, world
 
 
 
-=== TEST 9: capture non-existed location
+ei= TEST 9: capture non-existed location
 --- config
     location /lua {
         content_by_lua 'res = ngx.location.capture("/other"); ngx.print("status=", res.status)';
@@ -171,7 +171,7 @@ GET /lua
 
 
 
-=== TEST 10: invalid capture location (not as expected...)
+=== TEST 9: invalid capture location (not as expected...)
 --- config
     location /lua {
         content_by_lua 'res = ngx.location.capture("*(#*"); ngx.say("res=", res.status)';
@@ -183,15 +183,27 @@ res=404
 
 
 
-=== TEST 11: nil is "nil"
+=== TEST 10: nil is "nil"
 --- config
     location /lua {
-        content_by_lua 'ngx.print(nil)';
+        content_by_lua 'ngx.say(nil)';
     }
 --- request
 GET /lua
---- response_body_like: 500 Internal Server Error
---- error_code: 500
+--- response_body
+nil
+
+
+
+=== TEST 11: write boolean
+--- config
+    location /lua {
+        content_by_lua 'ngx.say(true, " ", false)';
+    }
+--- request
+GET /lua
+--- response_body
+true false
 
 
 
@@ -557,4 +569,67 @@ GET /main
 --- response_body
 5
 1
+
+
+
+=== TEST 31: basic print (HEAD + HTTP 1.1)
+--- config
+    location /lua {
+        # NOTE: the newline escape sequence must be double-escaped, as nginx config
+        # parser will unescape first!
+        content_by_lua 'ngx.print("Hello, Lua!\\n")';
+    }
+--- request
+HEAD /lua
+--- response_body
+
+
+
+=== TEST 32: basic print (HEAD + HTTP 1.0)
+--- config
+    location /lua {
+        # NOTE: the newline escape sequence must be double-escaped, as nginx config
+        # parser will unescape first!
+        content_by_lua 'ngx.print("Hello, Lua!\\n")';
+    }
+--- request
+HEAD /lua HTTP/1.0
+--- response_headers
+!Content-Length
+--- response_body
+
+
+
+=== TEST 33: headers_sent & HEAD
+--- config
+    location /lua {
+        content_by_lua '
+            ngx.say(ngx.headers_sent)
+            ngx.flush()
+            ngx.say(ngx.headers_sent)
+        ';
+    }
+--- request
+HEAD /lua
+--- response_body
+
+
+
+=== TEST 34: headers_sent + GET
+--- config
+    location /lua {
+        content_by_lua '
+            -- print("headers sent: ", ngx.headers_sent)
+            ngx.say(ngx.headers_sent)
+            ngx.say(ngx.headers_sent)
+            -- ngx.flush()
+            ngx.say(ngx.headers_sent)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+false
+true
+true
 

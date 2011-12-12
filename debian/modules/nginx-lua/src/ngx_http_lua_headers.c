@@ -1,336 +1,402 @@
-/* vim:set ft=c ts=4 sw=4 et fdm=marker: */
-/* Copyright (C) agentzh */
-
+#ifndef DDEBUG
 #define DDEBUG 0
-
+#endif
 #include "ddebug.h"
 
 #include "ngx_http_lua_headers.h"
+#include "ngx_http_lua_headers_out.h"
+#include "ngx_http_lua_headers_in.h"
 #include "ngx_http_lua_util.h"
-#include <ctype.h>
-
-/* request time */
-
-static ngx_int_t ngx_http_set_header(ngx_http_request_t *r,
-    ngx_http_lua_header_val_t *hv, ngx_str_t *value);
-
-static ngx_int_t ngx_http_set_header_helper(ngx_http_request_t *r,
-    ngx_http_lua_header_val_t *hv, ngx_str_t *value,
-    ngx_table_elt_t **output_header, ngx_flag_t no_create);
-
-static ngx_int_t ngx_http_set_builtin_header(ngx_http_request_t *r,
-    ngx_http_lua_header_val_t *hv, ngx_str_t *value);
-
-static ngx_int_t ngx_http_set_content_length_header(ngx_http_request_t *r,
-    ngx_http_lua_header_val_t *hv, ngx_str_t *value);
-
-static ngx_int_t ngx_http_set_content_type_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value);
-
-static ngx_int_t ngx_http_clear_builtin_header(ngx_http_request_t *r,
-    ngx_http_lua_header_val_t *hv, ngx_str_t *value);
-
-static ngx_int_t ngx_http_clear_content_length_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value);
 
 
-static ngx_http_lua_set_header_t ngx_http_lua_set_handlers[] = {
-
-    { ngx_string("Server"),
-                 offsetof(ngx_http_headers_out_t, server),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Date"),
-                 offsetof(ngx_http_headers_out_t, date),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Content-Encoding"),
-                 offsetof(ngx_http_headers_out_t, content_encoding),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Location"),
-                 offsetof(ngx_http_headers_out_t, location),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Refresh"),
-                 offsetof(ngx_http_headers_out_t, refresh),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Last-Modified"),
-                 offsetof(ngx_http_headers_out_t, last_modified),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Content-Range"),
-                 offsetof(ngx_http_headers_out_t, content_range),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Accept-Ranges"),
-                 offsetof(ngx_http_headers_out_t, accept_ranges),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("WWW-Authenticate"),
-                 offsetof(ngx_http_headers_out_t, www_authenticate),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Expires"),
-                 offsetof(ngx_http_headers_out_t, expires),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("E-Tag"),
-                 offsetof(ngx_http_headers_out_t, etag),
-                 ngx_http_set_builtin_header },
-
-    { ngx_string("Content-Length"),
-                 offsetof(ngx_http_headers_out_t, content_length),
-                 ngx_http_set_content_length_header },
-
-    { ngx_string("Content-Type"),
-                 0,
-                 ngx_http_set_content_type_header },
-
-    { ngx_null_string, 0, ngx_http_set_header }
-};
+static int ngx_http_lua_ngx_req_header_set_helper(lua_State *L);
+static int ngx_http_lua_ngx_header_get(lua_State *L);
+static int ngx_http_lua_ngx_header_set(lua_State *L);
+static int ngx_http_lua_ngx_req_get_headers(lua_State *L);
+static int ngx_http_lua_ngx_req_header_clear(lua_State *L);
+static int ngx_http_lua_ngx_req_header_set(lua_State *L);
 
 
-/* request time implementation */
+static int
+ngx_http_lua_ngx_req_get_headers(lua_State *L) {
+    ngx_list_part_t              *part;
+    ngx_table_elt_t              *header;
+    ngx_http_request_t           *r;
+    ngx_uint_t                    i;
 
-static ngx_int_t
-ngx_http_set_header(ngx_http_request_t *r, ngx_http_lua_header_val_t *hv,
-        ngx_str_t *value)
-{
-    return ngx_http_set_header_helper(r, hv, value, NULL, 0);
-}
-
-
-static ngx_int_t
-ngx_http_set_header_helper(ngx_http_request_t *r, ngx_http_lua_header_val_t *hv,
-        ngx_str_t *value, ngx_table_elt_t **output_header,
-        ngx_flag_t no_create)
-{
-    ngx_table_elt_t             *h;
-    ngx_list_part_t             *part;
-    ngx_uint_t                  i;
-    ngx_flag_t                  matched = 0;
-
-    if (hv->no_override) {
-        goto new_header;
+    if (lua_gettop(L) != 0) {
+        return luaL_error(L, "expecting 0 arguments but seen %d",
+                lua_gettop(L));
     }
 
-    part = &r->headers_out.headers.part;
-    h = part->elts;
+    lua_getglobal(L, GLOBALS_SYMBOL_REQUEST);
+    r = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    lua_createtable(L, 0, 4);
+
+    part = &r->headers_in.headers.part;
+    header = part->elts;
 
     for (i = 0; /* void */; i++) {
+
         if (i >= part->nelts) {
             if (part->next == NULL) {
                 break;
             }
+
             part = part->next;
-            h = part->elts;
+            header = part->elts;
             i = 0;
         }
 
-        if (
-            (h[i].key.len == hv->key.len
-                && ngx_strncasecmp(h[i].key.data,
-                    hv->key.data,
-                                   h[i].key.len) == 0)
-            ||
-            (h[i].key.len >= hv->key.len-1
-                && ngx_strncasecmp(h[i].key.data,
-                    hv->key.data,
-                                   hv->key.len-1) == 0)
-            )
-        {
-            if (value->len == 0) {
-                dd("clearing normal header for %.*s", (int) hv->key.len,
-                        hv->key.data);
+        lua_pushlstring(L, (char *) header[i].key.data, header[i].key.len);
+            /* stack: table key */
 
-                h[i].hash = 0;
-            }
+        lua_pushlstring(L, (char *) header[i].value.data,
+                header[i].value.len); /* stack: table key value */
 
-            h[i].value = *value;
+        ngx_http_lua_set_multi_value_table(L, -3);
 
-            if (output_header) {
-                *output_header = &h[i];
-            }
+        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+                       "lua request header: \"%V: %V\"",
+                       &header[i].key, &header[i].value);
+    }
 
-            /* return NGX_OK; */
-            matched = 1;
+    return 1;
+}
+
+
+static int
+ngx_http_lua_ngx_header_get(lua_State *L)
+{
+    ngx_http_request_t          *r;
+    u_char                      *p;
+    ngx_str_t                    key;
+    ngx_uint_t                   i;
+    size_t                       len;
+
+    lua_getglobal(L, GLOBALS_SYMBOL_REQUEST);
+    r = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    /* we skip the first argument that is the table */
+    p = (u_char *) luaL_checklstring(L, 2, &len);
+
+    dd("key: %.*s, len %d", (int) len, p, (int) len);
+
+    /* replace "_" with "-" */
+    for (i = 0; i < len; i++) {
+        if (p[i] == '_') {
+            p[i] = '-';
         }
     }
 
-    if (matched){
-      return NGX_OK;
+    key.data = ngx_palloc(r->pool, len + 1);
+    if (key.data == NULL) {
+        return luaL_error(L, "out of memory");
     }
 
-    if (no_create && value->len == 0) {
-        return NGX_OK;
-    }
+    ngx_memcpy(key.data, p, len);
 
-new_header:
-    h = ngx_list_push(&r->headers_out.headers);
+    key.data[len] = '\0';
 
-    if (h == NULL) {
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
+    key.len = len;
 
-    if (value->len == 0) {
-        h->hash = 0;
-    } else {
-        h->hash = hv->hash;
-    }
-
-    h->key = hv->key;
-    h->value = *value;
-
-    h->lowcase_key = ngx_pnalloc(r->pool, h->key.len);
-    if (h->lowcase_key == NULL) {
-        return NGX_HTTP_INTERNAL_SERVER_ERROR;
-    }
-
-    ngx_strlow(h->lowcase_key, h->key.data, h->key.len);
-
-    if (output_header) {
-        *output_header = h;
-    }
-
-    return NGX_OK;
+    return ngx_http_lua_get_output_header(L, r, &key);
 }
 
 
-static ngx_int_t
-ngx_http_set_builtin_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value)
+static int
+ngx_http_lua_ngx_header_set(lua_State *L)
 {
-    ngx_table_elt_t  *h, **old;
+    ngx_http_request_t          *r;
+    u_char                      *p;
+    ngx_str_t                    key;
+    ngx_str_t                    value;
+    ngx_uint_t                   i;
+    size_t                       len;
+    ngx_http_lua_ctx_t          *ctx;
+    ngx_int_t                    rc;
+    ngx_uint_t                   n;
 
-    if (hv->offset) {
-        old = (ngx_table_elt_t **) ((char *) &r->headers_out + hv->offset);
+    lua_getglobal(L, GLOBALS_SYMBOL_REQUEST);
+    r = lua_touserdata(L, -1);
+    lua_pop(L, 1);
 
-    } else {
-        old = NULL;
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
     }
 
-    if (old == NULL || *old == NULL) {
-        return ngx_http_set_header_helper(r, hv, value, old, 0);
+    ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
+
+    if (ctx->headers_sent) {
+        return luaL_error(L, "attempt to set ngx.header.HEADER after "
+                "sending out response headers");
     }
 
-    h = *old;
+    /* we skip the first argument that is the table */
+    p = (u_char *) luaL_checklstring(L, 2, &len);
 
-    if (value->len == 0) {
-        dd("clearing the builtin header");
+    dd("key: %.*s, len %d", (int) len, p, (int) len);
 
-        h->hash = 0;
-        h->value = *value;
-
-        return NGX_OK;
+    /* replace "_" with "-" */
+    for (i = 0; i < len; i++) {
+        if (p[i] == '_') {
+            p[i] = '-';
+        }
     }
 
-    h->hash = hv->hash;
-    h->key = hv->key;
-    h->value = *value;
-
-    return NGX_OK;
-}
-
-
-static ngx_int_t
-ngx_http_set_content_type_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value)
-{
-    r->headers_out.content_type_len = value->len;
-    r->headers_out.content_type = *value;
-    r->headers_out.content_type_hash = hv->hash;
-    r->headers_out.content_type_lowcase = NULL;
-
-    value->len = 0;
-
-    return ngx_http_set_header_helper(r, hv, value, NULL, 1);
-}
-
-
-static ngx_int_t
-ngx_http_set_content_length_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value)
-{
-    off_t           len;
-
-    if (value->len == 0) {
-        return ngx_http_clear_content_length_header(r, hv, value);
+    key.data = ngx_palloc(r->pool, len + 1);
+    if (key.data == NULL) {
+        return luaL_error(L, "out of memory");
     }
 
-    len = ngx_atosz(value->data, value->len);
-    if (len == NGX_ERROR) {
-        return NGX_ERROR;
-    }
+    ngx_memcpy(key.data, p, len);
 
-    r->headers_out.content_length_n = len;
+    key.data[len] = '\0';
 
-    return ngx_http_set_builtin_header(r, hv, value);
-}
+    key.len = len;
 
-
-static ngx_int_t
-ngx_http_clear_content_length_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value)
-{
-    r->headers_out.content_length_n = -1;
-
-    return ngx_http_clear_builtin_header(r, hv, value);
-}
-
-
-static ngx_int_t
-ngx_http_clear_builtin_header(ngx_http_request_t *r,
-        ngx_http_lua_header_val_t *hv, ngx_str_t *value)
-{
-    value->len = 0;
-
-    return ngx_http_set_builtin_header(r, hv, value);
-}
-
-
-ngx_int_t
-ngx_http_lua_set_header(ngx_http_request_t *r, ngx_str_t key, ngx_str_t value,
-        ngx_flag_t override)
-{
-    ngx_http_lua_header_val_t         hv;
-    ngx_http_lua_set_header_t        *handlers = ngx_http_lua_set_handlers;
-
-    ngx_uint_t                        i;
-
-    dd("set header value: %.*s", (int) value.len, value.data);
-
-    hv.hash = 1;
-    hv.key = key;
-
-    hv.offset = 0;
-    hv.no_override = ! override;
-
-    for (i = 0; handlers[i].name.len; i++) {
-        if (hv.key.len != handlers[i].name.len
-                || ngx_strncasecmp(hv.key.data, handlers[i].name.data,
-                    handlers[i].name.len) != 0)
-        {
-            dd("hv key comparison: %s <> %s", handlers[i].name.data,
-                    hv.key.data);
-
-            continue;
+    if (! ctx->headers_set) {
+        rc = ngx_http_set_content_type(r);
+        if (rc != NGX_OK) {
+            return luaL_error(L,
+                    "failed to set default content type: %d",
+                    (int) rc);
         }
 
-        dd("Matched handler: %s %s", handlers[i].name.data, hv.key.data);
-
-        hv.offset = handlers[i].offset;
-        hv.handler = handlers[i].handler;
-
-        break;
+        ctx->headers_set = 1;
     }
 
-    if (handlers[i].name.len == 0 && handlers[i].handler) {
-        hv.offset = handlers[i].offset;
-        hv.handler = handlers[i].handler;
+    if (lua_type(L, 3) == LUA_TNIL) {
+        value.data = NULL;
+        value.len = 0;
+
+    } else if (lua_type(L, 3) == LUA_TTABLE) {
+        n = luaL_getn(L, 3);
+        if (n == 0) {
+            value.data = NULL;
+            value.len = 0;
+
+        } else {
+            for (i = 1; i <= n; i++) {
+                dd("header value table index %d", (int) i);
+
+                lua_rawgeti(L, 3, i);
+                p = (u_char *) luaL_checklstring(L, -1, &len);
+
+                value.data = ngx_palloc(r->pool, len);
+                if (value.data == NULL) {
+                    return luaL_error(L, "out of memory");
+                }
+
+                ngx_memcpy(value.data, p, len);
+                value.len = len;
+
+                rc = ngx_http_lua_set_output_header(r, key, value,
+                        i == 1 /* override */);
+
+                if (rc != NGX_OK) {
+                    return luaL_error(L,
+                            "failed to set header %s (error: %d)",
+                            key.data, (int) rc);
+                }
+            }
+
+            return 0;
+        }
+
+    } else {
+        p = (u_char *) luaL_checklstring(L, 3, &len);
+        value.data = ngx_palloc(r->pool, len);
+        if (value.data == NULL) {
+            return luaL_error(L, "out of memory");
+        }
+
+        ngx_memcpy(value.data, p, len);
+        value.len = len;
     }
 
-    return hv.handler(r, &hv, &value);
+    dd("key: %.*s, value: %.*s",
+            (int) key.len, key.data, (int) value.len, value.data);
+
+    rc = ngx_http_lua_set_output_header(r, key, value, 1 /* override */);
+
+    if (rc != NGX_OK) {
+        return luaL_error(L, "failed to set header %s (error: %d)",
+                key.data, (int) rc);
+    }
+
+    return 0;
+}
+
+
+static int
+ngx_http_lua_ngx_req_header_clear(lua_State *L)
+{
+    if (lua_gettop(L) != 1) {
+        return luaL_error(L, "expecting one arguments, but seen %d",
+                lua_gettop(L));
+    }
+
+    lua_pushnil(L);
+
+    return ngx_http_lua_ngx_req_header_set_helper(L);
+}
+
+
+static int
+ngx_http_lua_ngx_req_header_set(lua_State *L)
+{
+    if (lua_gettop(L) != 2) {
+        return luaL_error(L, "expecting two arguments, but seen %d",
+                lua_gettop(L));
+    }
+
+    return ngx_http_lua_ngx_req_header_set_helper(L);
+}
+
+
+static int
+ngx_http_lua_ngx_req_header_set_helper(lua_State *L)
+{
+    ngx_http_request_t          *r;
+    u_char                      *p;
+    ngx_str_t                    key;
+    ngx_str_t                    value;
+    ngx_uint_t                   i;
+    size_t                       len;
+    ngx_int_t                    rc;
+    ngx_uint_t                   n;
+
+    lua_getglobal(L, GLOBALS_SYMBOL_REQUEST);
+    r = lua_touserdata(L, -1);
+    lua_pop(L, 1);
+
+    if (r == NULL) {
+        return luaL_error(L, "no request object found");
+    }
+
+    p = (u_char *) luaL_checklstring(L, 1, &len);
+
+    dd("key: %.*s, len %d", (int) len, p, (int) len);
+
+    /* replace "_" with "-" */
+    for (i = 0; i < len; i++) {
+        if (p[i] == '_') {
+            p[i] = '-';
+        }
+    }
+
+    key.data = ngx_palloc(r->pool, len + 1);
+    if (key.data == NULL) {
+        return luaL_error(L, "out of memory");
+    }
+
+    ngx_memcpy(key.data, p, len);
+
+    key.data[len] = '\0';
+
+    key.len = len;
+
+    if (lua_type(L, 2) == LUA_TNIL) {
+        value.data = NULL;
+        value.len = 0;
+
+    } else if (lua_type(L, 2) == LUA_TTABLE) {
+        n = luaL_getn(L, 2);
+        if (n == 0) {
+            value.data = NULL;
+            value.len = 0;
+
+        } else {
+            for (i = 1; i <= n; i++) {
+                dd("header value table index %d", (int) i);
+
+                lua_rawgeti(L, 2, i);
+                p = (u_char *) luaL_checklstring(L, -1, &len);
+
+                value.data = ngx_palloc(r->pool, len);
+                if (value.data == NULL) {
+                    return luaL_error(L, "out of memory");
+                }
+
+                ngx_memcpy(value.data, p, len);
+                value.len = len;
+
+                rc = ngx_http_lua_set_input_header(r, key, value,
+                        i == 1 /* override */);
+
+                if (rc != NGX_OK) {
+                    return luaL_error(L,
+                            "failed to set header %s (error: %d)",
+                            key.data, (int) rc);
+                }
+            }
+
+            return 0;
+        }
+
+    } else {
+        p = (u_char *) luaL_checklstring(L, 2, &len);
+        value.data = ngx_palloc(r->pool, len);
+        if (value.data == NULL) {
+            return luaL_error(L, "out of memory");
+        }
+
+        ngx_memcpy(value.data, p, len);
+        value.len = len;
+    }
+
+    dd("key: %.*s, value: %.*s",
+            (int) key.len, key.data, (int) value.len, value.data);
+
+    rc = ngx_http_lua_set_input_header(r, key, value, 1 /* override */);
+
+    if (rc != NGX_OK) {
+        return luaL_error(L, "failed to set header %s (error: %d)",
+                key.data, (int) rc);
+    }
+
+    return 0;
+}
+
+
+void
+ngx_http_lua_inject_resp_header_api(lua_State *L)
+{
+    lua_newtable(L);    /* .header */
+
+    lua_createtable(L, 0, 2); /* metatable for .header */
+    lua_pushcfunction(L, ngx_http_lua_ngx_header_get);
+    lua_setfield(L, -2, "__index");
+    lua_pushcfunction(L, ngx_http_lua_ngx_header_set);
+    lua_setfield(L, -2, "__newindex");
+    lua_setmetatable(L, -2);
+
+    lua_setfield(L, -2, "header");
+}
+
+
+void
+ngx_http_lua_inject_req_header_api(lua_State *L)
+{
+    lua_pushcfunction(L, ngx_http_lua_ngx_req_header_clear);
+    lua_setfield(L, -2, "clear_header");
+
+    lua_pushcfunction(L, ngx_http_lua_ngx_req_header_set);
+    lua_setfield(L, -2, "set_header");
+
+    lua_pushcfunction(L, ngx_http_lua_ngx_req_get_headers);
+    lua_setfield(L, -2, "get_headers");
 }
 

@@ -3,9 +3,9 @@ use lib 'lib';
 use Test::Nginx::Socket;
 
 #worker_connections(1014);
-#master_process_enabled(1);
-#log_level('warn');
 #no_nginx_manager();
+#log_level('warn');
+#master_on();
 
 repeat_each(2);
 
@@ -24,6 +24,7 @@ __DATA__
         # parser will unescape first!
         rewrite_by_lua 'ngx.print("Hello, Lua!\\n")';
         content_by_lua return;
+        #content_by_lua 'ngx.say("Hi")';
     }
 --- request
 GET /lua
@@ -200,17 +201,30 @@ res=404
 === TEST 11: nil is "nil"
 --- config
     location /lua {
-        rewrite_by_lua 'ngx.print(nil)';
-        content_by_lua 'ngx.exit(ngx.OK)';
+        rewrite_by_lua 'ngx.say(nil)';
+        content_by_lua return;
     }
 --- request
 GET /lua
---- response_body_like: 500 Internal Server Error
---- error_code: 500
+--- response_body
+nil
 
 
 
-=== TEST 12: bad argument type to ngx.location.capture
+=== TEST 12: write boolean
+--- config
+    location /lua {
+        rewrite_by_lua 'ngx.say(true, " ", false)';
+        content_by_lua return;
+    }
+--- request
+GET /lua
+--- response_body
+true false
+
+
+
+=== TEST 13: bad argument type to ngx.location.capture
 --- config
     location /lua {
         rewrite_by_lua 'ngx.location.capture(nil)';
@@ -223,7 +237,7 @@ GET /lua
 
 
 
-=== TEST 13: capture location (default 0);
+=== TEST 14: capture location (default 0);
 --- config
  location /recur {
        rewrite_by_lua '
@@ -249,7 +263,7 @@ end
 
 
 
-=== TEST 14: capture location
+=== TEST 15: capture location
 --- config
  location /recur {
        rewrite_by_lua '
@@ -278,7 +292,7 @@ end
 
 
 
-=== TEST 15: setting nginx variables from within Lua
+=== TEST 16: setting nginx variables from within Lua
 --- config
  location /set {
        set $a "";
@@ -295,7 +309,7 @@ Foo: 32
 
 
 
-=== TEST 16: nginx quote sql string 1
+=== TEST 17: nginx quote sql string 1
 --- config
  location /set {
        set $a 'hello\n\r\'"\\'; # this runs after rewrite_by_lua
@@ -309,7 +323,7 @@ GET /set
 
 
 
-=== TEST 17: nginx quote sql string 2
+=== TEST 18: nginx quote sql string 2
 --- config
 location /set {
     #set $a "hello\n\r'\"\\";
@@ -323,7 +337,7 @@ GET /set
 
 
 
-=== TEST 18: use dollar
+=== TEST 19: use dollar
 --- config
 location /set {
     rewrite_by_lua '
@@ -339,7 +353,7 @@ GET /set
 
 
 
-=== TEST 19: subrequests do not share variables of main requests by default
+=== TEST 20: subrequests do not share variables of main requests by default
 --- config
 location /sub {
     echo $a;
@@ -355,7 +369,7 @@ GET /parent
 
 
 
-=== TEST 20: subrequests can share variables of main requests
+=== TEST 21: subrequests can share variables of main requests
 --- config
 location /sub {
     echo $a;
@@ -379,7 +393,7 @@ GET /parent
 
 
 
-=== TEST 21: main requests use subrequests' variables
+=== TEST 22: main requests use subrequests' variables
 --- config
 location /sub {
     set $a 12;
@@ -399,7 +413,7 @@ GET /parent
 
 
 
-=== TEST 22: main requests do NOT use subrequests' variables
+=== TEST 23: main requests do NOT use subrequests' variables
 --- config
 location /sub {
     set $a 12;
@@ -419,7 +433,7 @@ GET /parent
 
 
 
-=== TEST 23: capture location headers
+=== TEST 24: capture location headers
 --- config
     location /other {
         default_type 'foo/bar';
@@ -441,7 +455,7 @@ type: foo/bar
 
 
 
-=== TEST 24: capture location headers
+=== TEST 25: capture location headers
 --- config
     location /other {
         default_type 'foo/bar';
@@ -468,7 +482,7 @@ Bar: Bah
 
 
 
-=== TEST 25: capture location headers
+=== TEST 26: capture location headers
 --- config
     location /other {
         default_type 'foo/bar';
@@ -495,7 +509,7 @@ Bar: nil
 
 
 
-=== TEST 26: rewrite_by_lua runs before ngx_access
+=== TEST 27: rewrite_by_lua runs before ngx_access
 --- config
     location /lua {
         deny all;
@@ -513,7 +527,7 @@ GET /lua
 
 
 
-=== TEST 27: rewrite_by_lua shouldn't send headers automatically (on simple return)
+=== TEST 28: rewrite_by_lua shouldn't send headers automatically (on simple return)
 --- config
     location /lua {
         rewrite_by_lua 'return';
@@ -536,7 +550,7 @@ foo
 
 
 
-=== TEST 28: rewrite_by_lua shouldn't send headers automatically (on simple exit)
+=== TEST 29: rewrite_by_lua shouldn't send headers automatically (on simple exit)
 --- config
     location /lua {
         rewrite_by_lua 'ngx.exit(ngx.OK)';
@@ -559,7 +573,7 @@ foo
 
 
 
-=== TEST 29: short circuit
+=== TEST 30: short circuit
 --- config
     location /lua {
         rewrite_by_lua '
@@ -580,7 +594,7 @@ Hi
 
 
 
-=== TEST 30: nginx vars in script path
+=== TEST 31: nginx vars in script path
 --- config
     location ~ /lua/(.+)$ {
         rewrite_by_lua_file html/$1.lua;
@@ -602,7 +616,7 @@ Hi
 
 
 
-=== TEST 31: phase postponing works for various locations
+=== TEST 32: phase postponing works for various locations
 --- config
     location ~ '^/lua/(.+)' {
         set $path $1;
@@ -630,7 +644,7 @@ bah
 
 
 
-=== TEST 32: server rewrite_by_lua
+=== TEST 33: server rewrite_by_lua
 --- config
     rewrite_by_lua 'ngx.header["X-Foo"] = "bar" ngx.send_headers()';
 --- request
@@ -642,7 +656,7 @@ X-Foo: bar
 
 
 
-=== TEST 33: server rewrite_by_lua_file
+=== TEST 34: server rewrite_by_lua_file
 --- config
     rewrite_by_lua_file html/foo.lua;
 --- user_files

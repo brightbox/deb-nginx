@@ -5,7 +5,7 @@
 #include <nginx.h>
 #include "ngx_http_lua_accessby.h"
 #include "ngx_http_lua_util.h"
-#include "ngx_http_lua_hook.h"
+#include "ngx_http_lua_exception.h"
 #include "ngx_http_lua_cache.h"
 
 
@@ -22,7 +22,7 @@ ngx_http_lua_access_by_chunk(lua_State *L, ngx_http_request_t *r)
 
     if (cc == NULL) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                "(lua-content-by-chunk) failed to create new coroutine "
+                "lua: failed to create new coroutine "
                 "to handle request");
 
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -109,7 +109,7 @@ ngx_http_lua_access_handler_file(ngx_http_request_t *r)
 
     /*  load Lua script file (w/ cache)        sp = 1 */
     rc = ngx_http_lua_cache_loadfile(L, script_path, llcf->access_src_key,
-            &err, llcf->enable_code_cache);
+            &err, llcf->enable_code_cache ? 1 : 0);
 
     if (rc != NGX_OK) {
         if (err == NULL) {
@@ -155,7 +155,8 @@ ngx_http_lua_access_handler(ngx_http_request_t *r)
     ngx_int_t                    rc;
     ngx_http_lua_main_conf_t    *lmcf;
 
-    dd("in access handler: %.*s", (int) r->uri.len, r->uri.data);
+    ngx_log_debug1(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,
+            "lua access handler, uri \"%V\"", &r->uri);
 
     lmcf = ngx_http_get_module_main_conf(r, ngx_http_lua_module);
 
@@ -216,6 +217,7 @@ ngx_http_lua_access_handler(ngx_http_request_t *r)
         dd("setting new ctx: ctx = %p", ctx);
 
         ctx->cc_ref = LUA_NOREF;
+        ctx->ctx_ref = LUA_NOREF;
 
         ngx_http_set_ctx(r, ctx, ngx_http_lua_module);
     }
@@ -223,7 +225,8 @@ ngx_http_lua_access_handler(ngx_http_request_t *r)
     dd("entered? %d", (int) ctx->entered_access_phase);
 
     if (ctx->waiting_more_body) {
-        return NGX_DECLINED;
+        dd("WAITING MORE BODY");
+        return NGX_DONE;
     }
 
     if (ctx->entered_access_phase) {
@@ -242,7 +245,7 @@ ngx_http_lua_access_handler(ngx_http_request_t *r)
             ! ctx->read_body_done &&
             ((r->method & NGX_HTTP_POST) || (r->method & NGX_HTTP_PUT)))
     {
-        rc = ngx_http_read_client_request_body(r, 
+        rc = ngx_http_read_client_request_body(r,
                 ngx_http_lua_generic_phase_post_read);
 
         if (rc == NGX_ERROR || rc >= NGX_HTTP_SPECIAL_RESPONSE) {
@@ -279,7 +282,7 @@ ngx_http_lua_access_handler_inline(ngx_http_request_t *r)
     /*  load Lua inline script (w/ cache) sp = 1 */
     rc = ngx_http_lua_cache_loadbuffer(L, llcf->access_src.value.data,
             llcf->access_src.value.len, llcf->access_src_key,
-            "access_by_lua", &err, llcf->enable_code_cache);
+            "access_by_lua", &err, llcf->enable_code_cache ? 1 : 0);
 
     if (rc != NGX_OK) {
         if (err == NULL) {

@@ -4,7 +4,8 @@ Priority: optional
 Maintainer: Jose Parrella <bureado@debian.org>
 Uploaders: Fabio Tranchitella <kobold@debian.org>,
  Kartik Mistry <kartik@debian.org>,
- Michael Lustfield <mtecknology@ubuntu.com>
+ Michael Lustfield <michael@lustfield.net>,
+ Dmitry E. Oboukhov <unera@debian.org>
 Build-Depends: debhelper (>= 7),
                autotools-dev,
                libgd2-noxpm-dev,
@@ -16,7 +17,7 @@ Build-Depends: debhelper (>= 7),
                libperl-dev,
                libxslt1-dev,
                zlib1g-dev,
-               passenger-dev (>= 3.0.9), passenger-dev (<< 3.0.10)
+               passenger-dev (>= 3.0.11), passenger-dev (<< 3.0.12)
 Standards-Version: 3.9.2
 Homepage: http://nginx.net
 Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/nginx/trunk
@@ -49,8 +50,10 @@ Description: small, but very powerful and efficient web server (documentation)
 Package: nginx-common
 Architecture: all
 Depends: ${misc:Depends}, lsb-base (>= 3.2-14)
-Replaces: nginx (<< 0.8.54-4), nginx-full (<< 0.8.54-4), nginx-light (<< 0.8.54-4), nginx-extras (<< 0.8.54-4)
-Breaks: nginx (<< 0.8.54-4), nginx-full (<< 0.8.54-4), nginx-light (<< 0.8.54-4), nginx-extras (<< 0.8.54-4)
+Replaces: nginx (<< 0.8.54-4), nginx-full (<< 0.8.54-4),
+ nginx-light (<< 0.8.54-4), nginx-extras (<< 0.8.54-4)
+Breaks: nginx (<< 0.8.54-4), nginx-full (<< 0.8.54-4),
+ nginx-light (<< 0.8.54-4), nginx-extras (<< 0.8.54-4)
 Description: small, but very powerful and efficient web server (common files)
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -63,7 +66,7 @@ Description: small, but very powerful and efficient web server (common files)
 Package: nginx-full
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version}), 
- passenger-common (>= 3.0.9), passenger-common (<< 3.0.10)
+ passenger-common (>= 3.0.11), passenger-common (<< 3.0.12)
 Provides: httpd, nginx
 Conflicts: nginx-light, nginx-extras
 Description: nginx web server with full set of core modules
@@ -81,10 +84,10 @@ Description: nginx web server with full set of core modules
    Geo, Gzip, Headers, Index, Limit Requests, Limit Zone, Log, Map, Memcached,
    Proxy, Referer, Rewrite, SCGI, Split Clients, SSI, Upstream, User ID, UWSGI
  Optional HTTP Modules:
-   Debug, WebDAV, GeoIP, Gzip Precompression, Image Filter, RealIP, Stub Status,
-   XSLT, IPv6, Addition
+   Addition, Debug, GeoIP, Gzip Precompression, HTTP Sub, Image Filter, IPv6,
+   RealIP, Stub Status, WebDAV, XSLT
  Mail Modules:
-   Mail Core, POP3, IMAP, SMTP, SSL
+   Mail Core, IMAP, POP3, SMTP, SSL
  Third Party Modules:
    Upstream Fair Queue, Echo, Passenger
 
@@ -119,9 +122,9 @@ Description: nginx web server with minimal set of core modules
  MODULES INCLUDED:
  Standard HTTP Modules:
    Core, Access, Auth Basic, Auto Index, Charset, Empty GIF, FastCGI, Gzip,
-   Headers, Index, Log, Proxy, Rewrite, Split Clients, Upstream, User ID
+   Headers, Index, Log, Map, Proxy, Rewrite, Split Clients, Upstream, User ID
  Optional HTTP Modules:
-   Gzip Precompression, IPv6
+   Gzip Precompression, IPv6, Stub Status
  Mail Modules:
    None
  Third Party Modules:
@@ -145,7 +148,7 @@ Description: Debugging symbols for nginx (light)
 Package: nginx-extras
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends}, nginx-common (= ${source:Version}),
- passenger-common (>= 3.0.9), passenger-common (<< 3.0.10)
+ passenger-common (>= 3.0.11), passenger-common (<< 3.0.12)
 Provides: httpd, nginx
 Conflicts: nginx-full, nginx-light
 Description: nginx web server with full set of core modules and extras
@@ -164,16 +167,14 @@ Description: nginx web server with full set of core modules and extras
    Geo, Gzip, Headers, Index, Limit Requests, Limit Zone, Log, Map, Memcached,
    Proxy, Referer, Rewrite, SCGI, Split Clients, SSI, Upstream, User ID, UWSGI
  Optional HTTP Modules:
-   Debug, WebDAV, Flash Streaming Video, GeoIP, Gzip Precompression, Image
-   Filter, RealIP, Stub Status, XSLT, IPv6, Embedded Perl, Secure Link, Random
-   Index, Addition
- Other Modules:
-   File AIO
+   Addition, Debug, WebDAV, Flash Streaming Video, GeoIP, Gzip Precompression,
+   HTTP Sub, Image Filter, MP4, RealIP, Stub Status, SSL, XSLT, IPv6, Embedded
+   Perl, Secure Link, Random Index
  Mail Modules:
    Mail Core, POP3, IMAP, SMTP, SSL
  Third Party Modules:
-   Upstream Fair Queue, Echo, Embedded Lua, Nginx Development Kit, Upload Progress,
-   Passenger
+   Echo, Embedded Lua, http push, Nginx Development Kit, Upload Progress,
+   HttpHeadersMore, Upstream Fair Queue, Chunkin, Passenger
 
 Package: nginx-extras-dbg
 Architecture: any

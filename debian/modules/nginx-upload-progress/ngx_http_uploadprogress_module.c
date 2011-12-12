@@ -449,7 +449,6 @@ static void ngx_http_uploadprogress_event_handler(ngx_http_request_t *r)
 {
     ngx_str_t                                   *id, *oldid;
     ngx_slab_pool_t                             *shpool;
-    ngx_connection_t                            *c;
     ngx_shm_zone_t                              *shm_zone;
     ngx_http_uploadprogress_ctx_t               *ctx;
     ngx_http_uploadprogress_node_t              *up;
@@ -458,8 +457,6 @@ static void ngx_http_uploadprogress_event_handler(ngx_http_request_t *r)
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, r->connection->log, 0, "upload-progress: ngx_http_uploadprogress_event_handler");
     
-    c = r->connection;
-
     /* find node, update rest */
     oldid = id = get_tracking_id(r);
 
@@ -675,7 +672,7 @@ ngx_http_reportuploads_handler(ngx_http_request_t * r)
 /*
  There are 4 possibilities
    * request not yet started: found = false
-   * request in error:        err_status >= NGX_HTTP_SPECIAL_RESPONSE
+   * request in error:        err_status >= NGX_HTTP_BAD_REQUEST
    * request finished:        done = true
    * request not yet started but registered:        length==0 && rest ==0
    * reauest in progress:     rest > 0 
@@ -683,7 +680,7 @@ ngx_http_reportuploads_handler(ngx_http_request_t * r)
 
     if (!found) {
         state = uploadprogress_state_starting;
-    } else if (err_status >= NGX_HTTP_SPECIAL_RESPONSE) {
+    } else if (err_status >= NGX_HTTP_BAD_REQUEST) {
         state = uploadprogress_state_error;
     } else if (done) {
         state = uploadprogress_state_done;
@@ -1007,14 +1004,12 @@ ngx_http_uploadprogress_cleanup(void *data)
     ngx_http_uploadprogress_cleanup_t *upcln = data;
     ngx_slab_pool_t                 *shpool;
     ngx_rbtree_node_t               *node;
-    ngx_http_uploadprogress_ctx_t   *ctx;
     ngx_http_uploadprogress_node_t  *up;
     ngx_http_request_t              *r;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, upcln->shm_zone->shm.log, 0,
                    "uploadprogress cleanup called");
 
-    ctx = upcln->shm_zone->data;
     shpool = (ngx_slab_pool_t *) upcln->shm_zone->shm.addr;
     node = upcln->node;
     r = upcln->r;
@@ -1165,6 +1160,11 @@ ngx_http_uploadprogress_errortracker(ngx_http_request_t * r)
         node->key = hash;
         up->len = (u_char) id->len;
         up->err_status = r->err_status;
+        up->done = 0;
+        up->rest = 0;
+        up->length = 0;
+        up->timeout = 0;
+
         ngx_memcpy(up->data, id->data, id->len);
 
         up->next = ctx->list_head.next;
@@ -1235,7 +1235,6 @@ static void*
 ngx_http_uploadprogress_create_loc_conf(ngx_conf_t * cf)
 {
     ngx_http_uploadprogress_conf_t  *conf;
-    ngx_http_uploadprogress_template_t   *t;
     ngx_uint_t                            i;
 
     conf = ngx_pcalloc(cf->pool, sizeof(ngx_http_uploadprogress_conf_t));
@@ -1247,7 +1246,6 @@ ngx_http_uploadprogress_create_loc_conf(ngx_conf_t * cf)
         return NGX_CONF_ERROR;
     }
 
-    t = conf->templates.elts;
     for(i = 0;i < conf->templates.nalloc; i++) {
         ngx_http_uploadprogress_template_t *elt = ngx_array_push(&conf->templates);
         if (elt == NULL) {
@@ -1307,9 +1305,7 @@ static ngx_int_t
 ngx_http_uploadprogress_init_variables_and_templates(ngx_conf_t *cf)
 {
     ngx_http_variable_t  *var, *v;
-    ngx_http_uploadprogress_template_t   *t;
     ngx_http_uploadprogress_state_map_t  *m;
-    ssize_t                               n;
     ngx_uint_t                            i;
 
     /* Add variables */
@@ -1330,12 +1326,11 @@ ngx_http_uploadprogress_init_variables_and_templates(ngx_conf_t *cf)
     }
 
     m = ngx_http_uploadprogress_state_map;
-    t = ngx_http_uploadprogress_global_templates.elts;
     i = 0;
 
     while(m->name.data != NULL) {
         ngx_http_uploadprogress_template_t *elt = ngx_array_push(&ngx_http_uploadprogress_global_templates);
-        n = ngx_http_script_variables_count(ngx_http_uploadprogress_java_defaults + i);
+        ngx_http_script_variables_count(ngx_http_uploadprogress_java_defaults + i);
 
         if (ngx_http_upload_progress_set_template(cf, elt, ngx_http_uploadprogress_java_defaults + i) != NGX_CONF_OK) {
             return NGX_ERROR;

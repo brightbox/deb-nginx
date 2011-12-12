@@ -4,7 +4,7 @@ use Test::Nginx::Socket;
 
 #worker_connections(1014);
 #master_process_enabled(1);
-log_level('warn');
+#log_level('warn');
 
 repeat_each(2);
 #repeat_each(1);
@@ -666,4 +666,91 @@ GET /lua
 Foo: bar
 --- response_body
 header foo: [bar]
+
+
+
+=== TEST 27: lua calls lua via subrequests
+--- config
+    location /a {
+        content_by_lua '
+            ngx.say("hello, a");
+        ';
+    }
+    location /b {
+        content_by_lua '
+            ngx.say("hello, b");
+        ';
+    }
+    location /c {
+        content_by_lua '
+            ngx.say("hello, c");
+        ';
+    }
+    location /main {
+        content_by_lua '
+            res1, res2 = ngx.location.capture_multi({{"/a"}, {"/b"}})
+            res3 = ngx.location.capture("/c")
+            ngx.print(res1.body, res2.body, res3.body)
+        ';
+    }
+--- request
+    GET /main
+--- response_body
+hello, a
+hello, b
+hello, c
+
+
+
+=== TEST 28: POST (with body, proxy method, main request is a POST too)
+--- config
+    location /other {
+        default_type 'foo/bar';
+        echo_read_request_body;
+
+        echo $echo_request_method;
+        echo_request_body;
+    }
+
+    location /foo {
+        proxy_pass http://127.0.0.1:$server_port/other;
+    }
+
+    location /lua {
+        content_by_lua '
+            res = ngx.location.capture("/foo",
+                { method = ngx.HTTP_POST, body = "hello" });
+
+            ngx.print(res.body)
+        ';
+    }
+--- request
+POST /lua
+hi
+--- response_body chomp
+POST
+hello
+
+
+
+=== TEST 29: Last-Modified response header for static file subrequest
+--- config
+    location /lua {
+        content_by_lua '
+            res = ngx.location.capture("/foo.html")
+
+            ngx.say(res.status)
+            ngx.say(res.header["Last-Modified"])
+            ngx.print(res.body)
+        ';
+    }
+--- request
+GET /lua
+--- user_files
+>>> foo.html
+hello, static file
+--- response_body_like chomp
+^200
+[A-Za-z]+, \d{1,2} [A-Za-z]+ \d{4} \d{2}:\d{2}:\d{2} GMT
+hello, static file$
 

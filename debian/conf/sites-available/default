@@ -33,16 +33,11 @@ server {
 		try_files $uri $uri/ /index.html;
 	}
 
-	location /doc {
-		root /usr/share;
+	location /doc/ {
+		alias /usr/share/doc;
 		autoindex on;
 		allow 127.0.0.1;
 		deny all;
-	}
-
-	location /images {
-		root /usr/share;
-		autoindex off;
 	}
 
 	#error_page 404 /404.html;
@@ -54,15 +49,12 @@ server {
 	#	root /usr/share/nginx/www;
 	#}
 
-	# proxy the PHP scripts to Apache listening on 127.0.0.1:80
-	#
-	#location ~ \.php$ {
-	#	proxy_pass http://127.0.0.1;
-	#}
-
 	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
 	#
 	#location ~ \.php$ {
+	#	fastcgi_split_path_info ^(.+\.php)(/.+)$;
+	#	# NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini
+	#
 	#	fastcgi_pass 127.0.0.1:9000;
 	#	fastcgi_index index.php;
 	#	include fastcgi_params;

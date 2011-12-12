@@ -14,7 +14,6 @@
 static void ngx_http_lua_clear_package_loaded(lua_State *L);
 
 
-
 /**
  * Find code chunk associated with the given key in code cache,
  * and push it to the top of Lua stack if found.
@@ -113,7 +112,7 @@ ngx_http_lua_cache_store_code(lua_State *L, const char *key)
 ngx_int_t
 ngx_http_lua_cache_loadbuffer(lua_State *L, const u_char *src, size_t src_len,
         const u_char *cache_key, const char *name, char **err,
-        ngx_flag_t enabled)
+        unsigned enabled)
 {
     int          rc;
 
@@ -169,7 +168,7 @@ ngx_http_lua_cache_loadbuffer(lua_State *L, const u_char *src, size_t src_len,
 
 ngx_int_t
 ngx_http_lua_cache_loadfile(lua_State *L, const u_char *script,
-        const u_char *cache_key, char **err, ngx_flag_t enabled)
+        const u_char *cache_key, char **err, unsigned enabled)
 {
     int              rc;
 
@@ -268,6 +267,16 @@ ngx_http_lua_clear_package_loaded(lua_State *L)
 
         p = (u_char *) lua_tolstring(L, -1, &len);
 
+#if 1
+        /* XXX work-around the "stack overflow" issue of LuaRocks
+         * while unloading and reloading Lua modules */
+        if (len >= sizeof("luarocks") - 1 &&
+                ngx_strncmp(p, "luarocks", sizeof("luarocks") - 1) == 0)
+        {
+            goto done;
+        }
+#endif
+
         switch (len) {
         case 2:
             if (ngx_strncmp(p, "os", sizeof("os") - 1) == 0) {
@@ -290,6 +299,14 @@ ngx_http_lua_clear_package_loaded(lua_State *L)
             }
 
             if (ngx_strncmp(p, "jit", sizeof("jit") - 1) == 0) {
+                goto done;
+            }
+
+            if (ngx_strncmp(p, "ngx", sizeof("ngx") - 1) == 0) {
+                goto done;
+            }
+
+            if (ngx_strncmp(p, "ndk", sizeof("ndk") - 1) == 0) {
                 goto done;
             }
 

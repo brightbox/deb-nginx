@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -418,11 +419,6 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             goto failed;
         }
 
-        if (shm_zone[i].init == NULL) {
-            /* unused shared zone */
-            continue;
-        }
-
         shm_zone[i].shm.log = cycle->log;
 
         opart = &old_cycle->shared_memory.part;
@@ -744,7 +740,7 @@ old_shm_zone_done:
         ngx_temp_pool = ngx_create_pool(128, cycle->log);
         if (ngx_temp_pool == NULL) {
             ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
-                          "can not create ngx_temp_pool");
+                          "could not create ngx_temp_pool");
             exit(1);
         }
 
@@ -957,7 +953,7 @@ ngx_init_zone_pool(ngx_cycle_t *cycle, ngx_shm_zone_t *zn)
 
 #endif
 
-    if (ngx_shmtx_create(&sp->mutex, (void *) &sp->lock, file) != NGX_OK) {
+    if (ngx_shmtx_create(&sp->mutex, &sp->lock, file) != NGX_OK) {
         return NGX_ERROR;
     }
 

@@ -1,30 +1,34 @@
 Source: nginx
 Section: httpd
 Priority: optional
-Maintainer: Jose Parrella <bureado@debian.org>
-Uploaders: Fabio Tranchitella <kobold@debian.org>,
- Kartik Mistry <kartik@debian.org>,
- Michael Lustfield <michael@lustfield.net>,
- Dmitry E. Oboukhov <unera@debian.org>
-Build-Depends: debhelper (>= 7),
-               autotools-dev,
+Maintainer: Kartik Mistry <kartik@debian.org>
+Uploaders: Jose Parrella <bureado@debian.org>,
+           Fabio Tranchitella <kobold@debian.org>,
+           Michael Lustfield <michael@lustfield.net>,
+           Dmitry E. Oboukhov <unera@debian.org>,
+           Cyril Lavier <cyril.lavier@davromaniak.eu>
+Build-Depends: autotools-dev,
+               debhelper (>= 7),
+               dpkg-dev (>= 1.15.7),
                libgd2-noxpm-dev,
                libgeoip-dev,
                liblua5.1-dev,
                libmhash-dev,
-               libssl-dev,
+               libpam0g-dev,
                libpcre3-dev,
                libperl-dev,
+               libssl-dev,
                libxslt1-dev,
                zlib1g-dev
-Standards-Version: 3.9.2
+Standards-Version: 3.9.3
 Homepage: http://nginx.net
 Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/nginx/trunk
 Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/nginx/trunk
 
 Package: nginx
 Architecture: all
-Depends: ${misc:Depends}, nginx-full | nginx-light
+Depends: nginx-full | nginx-light,
+         ${misc:Depends}
 Description: small, but very powerful and efficient web server and mail proxy
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -37,7 +41,8 @@ Description: small, but very powerful and efficient web server and mail proxy
 Package: nginx-doc
 Architecture: all
 Section: doc
-Depends: ${misc:Depends}, lsb-base (>= 3.2-14)
+Depends: lsb-base (>= 3.2-14),
+         ${misc:Depends}
 Description: small, but very powerful and efficient web server (documentation)
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -48,11 +53,16 @@ Description: small, but very powerful and efficient web server (documentation)
 
 Package: nginx-common
 Architecture: all
-Depends: ${misc:Depends}, lsb-base (>= 3.2-14)
-Replaces: nginx (<< 0.8.54-4), nginx-full (<< 0.8.54-4),
- nginx-light (<< 0.8.54-4), nginx-extras (<< 0.8.54-4)
-Breaks: nginx (<< 0.8.54-4), nginx-full (<< 0.8.54-4),
- nginx-light (<< 0.8.54-4), nginx-extras (<< 0.8.54-4)
+Depends: lsb-base (>= 3.2-14),
+         ${misc:Depends}
+Replaces: nginx (<< 0.8.54-4),
+          nginx-extras (<< 0.8.54-4),
+          nginx-full (<< 0.8.54-4),
+          nginx-light (<< 0.8.54-4)
+Breaks: nginx (<< 0.8.54-4),
+        nginx-extras (<< 0.8.54-4),
+        nginx-full (<< 0.8.54-4),
+        nginx-light (<< 0.8.54-4)
 Description: small, but very powerful and efficient web server (common files)
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -64,9 +74,13 @@ Description: small, but very powerful and efficient web server (common files)
 
 Package: nginx-full
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version})
-Provides: httpd, nginx
-Conflicts: nginx-light, nginx-extras
+Depends: nginx-common (= ${source:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Provides: httpd,
+          nginx
+Conflicts: nginx-extras,
+           nginx-light
 Description: nginx web server with full set of core modules
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -93,7 +107,10 @@ Package: nginx-full-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: ${misc:Depends}, nginx-full (= ${binary:Version})
+Depends: nginx-full (= ${binary:Version}),
+         ${misc:Depends}
+Conflicts: nginx-extras-dbg,
+           nginx-light-dbg
 Description: Debugging symbols for nginx (full)
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -105,9 +122,14 @@ Description: Debugging symbols for nginx (full)
 
 Package: nginx-light
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, nginx-common (= ${source:Version})
-Provides: httpd, nginx
-Conflicts: nginx-full, nginx-extras
+Priority: extra
+Depends: nginx-common (= ${source:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends}
+Provides: httpd,
+          nginx
+Conflicts: nginx-extras,
+           nginx-full
 Description: nginx web server with minimal set of core modules
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -132,7 +154,10 @@ Package: nginx-light-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: ${misc:Depends}, nginx-light (= ${binary:Version})
+Depends: nginx-light (= ${binary:Version}),
+         ${misc:Depends}
+Conflicts: nginx-extras-dbg,
+           nginx-full-dbg
 Description: Debugging symbols for nginx (light)
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -145,10 +170,15 @@ Description: Debugging symbols for nginx (light)
 
 Package: nginx-extras
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${perl:Depends},
- nginx-common (= ${source:Version})
-Provides: httpd, nginx
-Conflicts: nginx-full, nginx-light
+Priority: extra
+Depends: nginx-common (= ${source:Version}),
+         ${misc:Depends},
+         ${perl:Depends},
+         ${shlibs:Depends}
+Provides: httpd,
+          nginx
+Conflicts: nginx-full,
+           nginx-light
 Description: nginx web server with full set of core modules and extras
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server
@@ -171,14 +201,17 @@ Description: nginx web server with full set of core modules and extras
  Mail Modules:
    Mail Core, POP3, IMAP, SMTP, SSL
  Third Party Modules:
-   Echo, Embedded Lua, http push, Nginx Development Kit, Upload Progress,
-   HttpHeadersMore, Upstream Fair Queue, Chunkin
+   Echo, Embedded Lua, http push, Nginx Development Kit, Upload module,
+   Upload Progress, HttpHeadersMore, Upstream Fair Queue, Chunkin, Auth PAM
 
 Package: nginx-extras-dbg
 Architecture: any
 Section: debug
 Priority: extra
-Depends: ${misc:Depends}, nginx-extras (= ${binary:Version})
+Depends: nginx-extras (= ${binary:Version}),
+         ${misc:Depends}
+Conflicts: nginx-full-dbg,
+           nginx-light-dbg
 Description: Debugging symbols for nginx (extras)
  Nginx (engine x) is a web server created by Igor Sysoev and kindly provided to
  the open-source community. This server can be used as standalone HTTP server

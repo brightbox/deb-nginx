@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -92,11 +93,6 @@ typedef struct aiocb  ngx_aiocb_t;
 #define NGX_LISTEN_BACKLOG        -1
 
 
-#if (defined SO_ACCEPTFILTER && !defined NGX_HAVE_DEFERRED_ACCEPT)
-#define NGX_HAVE_DEFERRED_ACCEPT  1
-#endif
-
-
 #if (__FreeBSD_version < 430000 || __FreeBSD_version < 500012)
 
 pid_t rfork_thread(int flags, void *stack, int (*func)(void *arg), void *arg);
@@ -114,6 +110,7 @@ pid_t rfork_thread(int flags, void *stack, int (*func)(void *arg), void *arg);
 
 
 #define NGX_HAVE_OS_SPECIFIC_INIT    1
+#define NGX_HAVE_DEBUG_MALLOC        1
 
 
 extern char **environ;

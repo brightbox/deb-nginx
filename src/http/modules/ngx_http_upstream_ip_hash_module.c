@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -185,8 +186,8 @@ ngx_http_upstream_get_ip_hash_peer(ngx_peer_connection_t *pc, void *data)
                     break;
                 }
 
-                if (now - peer->accessed > peer->fail_timeout) {
-                    peer->fails = 0;
+                if (now - peer->checked > peer->fail_timeout) {
+                    peer->checked = now;
                     break;
                 }
             }

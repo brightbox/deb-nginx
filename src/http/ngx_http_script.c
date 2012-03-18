@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -1106,6 +1107,8 @@ ngx_http_script_regex_end_code(ngx_http_script_engine_t *e)
                           "rewritten redirect: \"%V\"", &e->buf);
         }
 
+        ngx_http_clear_location(r);
+
         r->headers_out.location = ngx_list_push(&r->headers_out.headers);
         if (r->headers_out.location == NULL) {
             e->ip = ngx_http_script_exit;
@@ -1502,6 +1505,12 @@ ngx_http_script_file_code(ngx_http_script_engine_t *e)
     of.test_only = 1;
     of.errors = clcf->open_file_cache_errors;
     of.events = clcf->open_file_cache_events;
+
+    if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
+        e->ip = ngx_http_script_exit;
+        e->status = NGX_HTTP_INTERNAL_SERVER_ERROR;
+        return;
+    }
 
     if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
         != NGX_OK)

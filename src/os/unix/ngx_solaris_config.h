@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -98,6 +99,7 @@
 
 
 #define NGX_HAVE_OS_SPECIFIC_INIT    1
+#define ngx_debug_init()
 
 
 extern char **environ;

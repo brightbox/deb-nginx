@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -462,6 +463,7 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 void
 ngx_configure_listening_sockets(ngx_cycle_t *cycle)
 {
+    int                        keepalive;
     ngx_uint_t                 i;
     ngx_listening_t           *ls;
 
@@ -498,6 +500,56 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
                               ls[i].sndbuf, &ls[i].addr_text);
             }
         }
+
+        if (ls[i].keepalive) {
+            keepalive = (ls[i].keepalive == 1) ? 1 : 0;
+
+            if (setsockopt(ls[i].fd, SOL_SOCKET, SO_KEEPALIVE,
+                           (const void *) &keepalive, sizeof(int))
+                == -1)
+            {
+                ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_socket_errno,
+                              "setsockopt(SO_KEEPALIVE, %d) %V failed, ignored",
+                              keepalive, &ls[i].addr_text);
+            }
+        }
+
+#if (NGX_HAVE_KEEPALIVE_TUNABLE)
+
+        if (ls[i].keepidle) {
+            if (setsockopt(ls[i].fd, IPPROTO_TCP, TCP_KEEPIDLE,
+                           (const void *) &ls[i].keepidle, sizeof(int))
+                == -1)
+            {
+                ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_socket_errno,
+                              "setsockopt(TCP_KEEPIDLE, %d) %V failed, ignored",
+                              ls[i].keepidle, &ls[i].addr_text);
+            }
+        }
+
+        if (ls[i].keepintvl) {
+            if (setsockopt(ls[i].fd, IPPROTO_TCP, TCP_KEEPINTVL,
+                           (const void *) &ls[i].keepintvl, sizeof(int))
+                == -1)
+            {
+                ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_socket_errno,
+                             "setsockopt(TCP_KEEPINTVL, %d) %V failed, ignored",
+                             ls[i].keepintvl, &ls[i].addr_text);
+            }
+        }
+
+        if (ls[i].keepcnt) {
+            if (setsockopt(ls[i].fd, IPPROTO_TCP, TCP_KEEPCNT,
+                           (const void *) &ls[i].keepcnt, sizeof(int))
+                == -1)
+            {
+                ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_socket_errno,
+                              "setsockopt(TCP_KEEPCNT, %d) %V failed, ignored",
+                              ls[i].keepcnt, &ls[i].addr_text);
+            }
+        }
+
+#endif
 
 #if (NGX_HAVE_SETFIB)
         if (ls[i].setfib != -1) {
@@ -580,7 +632,7 @@ ngx_configure_listening_sockets(ngx_cycle_t *cycle)
             {
                 ngx_log_error(NGX_LOG_ALERT, cycle->log, ngx_errno,
                               "setsockopt(SO_ACCEPTFILTER, \"%s\") "
-                              " for %V failed, ignored",
+                              "for %V failed, ignored",
                               ls[i].accept_filter, &ls[i].addr_text);
                 continue;
             }

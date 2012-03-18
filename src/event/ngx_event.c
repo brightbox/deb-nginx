@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -521,7 +522,8 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_accept_mutex_ptr = (ngx_atomic_t *) shared;
     ngx_accept_mutex.spin = (ngx_uint_t) -1;
 
-    if (ngx_shmtx_create(&ngx_accept_mutex, shared, cycle->lock_file.data)
+    if (ngx_shmtx_create(&ngx_accept_mutex, (ngx_shmtx_sh_t *) shared,
+                         cycle->lock_file.data)
         != NGX_OK)
     {
         return NGX_ERROR;
@@ -1027,7 +1029,7 @@ ngx_event_use(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
                                "when the server runs without a master process "
                                "the \"%V\" event type must be the same as "
                                "in previous configuration - \"%s\" "
-                               "and it can not be changed on the fly, "
+                               "and it cannot be changed on the fly, "
                                "to change it you need to stop server "
                                "and start it again",
                                &value[1], old_ecf->name);

@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 #include <ngx_config.h>
@@ -42,14 +43,14 @@
 
 #if (NGX_DEBUG_MALLOC)
 
-#define ngx_slab_junk(p, size)     ngx_memset(p, 0xD0, size)
+#define ngx_slab_junk(p, size)     ngx_memset(p, 0xA5, size)
 
 #else
 
-#if (NGX_FREEBSD)
+#if (NGX_HAVE_DEBUG_MALLOC)
 
 #define ngx_slab_junk(p, size)                                                \
-    if (ngx_freebsd_debug_malloc)  ngx_memset(p, 0xD0, size)
+    if (ngx_debug_malloc)          ngx_memset(p, 0xA5, size)
 
 #else
 

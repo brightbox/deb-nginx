@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -474,6 +475,13 @@ header_out(r, key, value)
         r->headers_out.content_length = header;
     }
 
+    if (header->key.len == sizeof("Content-Encoding") - 1
+        && ngx_strncasecmp(header->key.data, "Content-Encoding",
+                           sizeof("Content-Encoding") - 1) == 0)
+    {
+        r->headers_out.content_encoding = header;
+    }
+
 
 void
 filename(r)
@@ -654,6 +662,10 @@ sendfile(r, filename, offset = -1, bytes = 0)
     of.min_uses = clcf->open_file_cache_min_uses;
     of.errors = clcf->open_file_cache_errors;
     of.events = clcf->open_file_cache_events;
+
+    if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
+        XSRETURN_EMPTY;
+    }
 
     if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
         != NGX_OK)
@@ -836,7 +848,7 @@ variable(r, name, value = NULL)
     var.len = len;
     var.data = lowcase;
 
-    #if (NGX_LOG_DEBUG)
+    #if (NGX_DEBUG)
 
     if (value) {
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, r->connection->log, 0,

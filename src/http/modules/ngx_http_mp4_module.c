@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 #include <ngx_config.h>
@@ -165,10 +166,10 @@ typedef struct {
     ((u_char *) (p))[7] = n4
 
 #define ngx_mp4_get_32value(p)                                                \
-    ( (((u_char *) (p))[0] << 24)                                             \
-    + (((u_char *) (p))[1] << 16)                                             \
-    + (((u_char *) (p))[2] << 8)                                              \
-    + (((u_char *) (p))[3]) )
+    ( ((uint32_t) ((u_char *) (p))[0] << 24)                                  \
+    + (           ((u_char *) (p))[1] << 16)                                  \
+    + (           ((u_char *) (p))[2] << 8)                                   \
+    + (           ((u_char *) (p))[3]) )
 
 #define ngx_mp4_set_32value(p, n)                                             \
     ((u_char *) (p))[0] = (u_char) ((n) >> 24);                               \
@@ -440,6 +441,10 @@ ngx_http_mp4_handler(ngx_http_request_t *r)
     of.errors = clcf->open_file_cache_errors;
     of.events = clcf->open_file_cache_events;
 
+    if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
     if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
         != NGX_OK)
     {
@@ -457,6 +462,10 @@ ngx_http_mp4_handler(ngx_http_request_t *r)
             break;
 
         case NGX_EACCES:
+#if (NGX_HAVE_OPENAT)
+        case NGX_EMLINK:
+        case NGX_ELOOP:
+#endif
 
             level = NGX_LOG_ERR;
             rc = NGX_HTTP_FORBIDDEN;
@@ -1899,7 +1908,7 @@ ngx_http_mp4_update_stts_atom(ngx_http_mp4_file_t *mp4,
         ngx_log_debug2(NGX_LOG_DEBUG_HTTP, mp4->file.log, 0,
                        "count:%uD, duration:%uD", count, duration);
 
-        if (start_time < count * duration) {
+        if (start_time < (uint64_t) count * duration) {
             start_sample += (ngx_uint_t) (start_time / duration);
             count -= start_sample;
             ngx_mp4_set_32value(entry->count, count);
@@ -2381,6 +2390,8 @@ found:
 
     data->pos = (u_char *) entry;
     atom_size = sizeof(ngx_mp4_stsc_atom_t) + (data->last - data->pos);
+
+    ngx_mp4_set_32value(entry->chunk, 1);
 
     if (trak->chunk_samples) {
 

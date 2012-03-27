@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -160,8 +161,8 @@ static ngx_http_module_t  ngx_http_log_module_ctx = {
     NULL,                                  /* create server configuration */
     NULL,                                  /* merge server configuration */
 
-    ngx_http_log_create_loc_conf,          /* create location configration */
-    ngx_http_log_merge_loc_conf            /* merge location configration */
+    ngx_http_log_create_loc_conf,          /* create location configuration */
+    ngx_http_log_merge_loc_conf            /* merge location configuration */
 };
 
 
@@ -372,18 +373,18 @@ ngx_http_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t *script,
     ngx_http_log_loc_conf_t   *llcf;
     ngx_http_core_loc_conf_t  *clcf;
 
+    clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
+
     if (!r->root_tested) {
 
-        /* test root directory existance */
+        /* test root directory existence */
 
         if (ngx_http_map_uri_to_path(r, &path, &root, 0) == NULL) {
-            /* simulate successfull logging */
+            /* simulate successful logging */
             return len;
         }
 
         path.data[root] = '\0';
-
-        clcf = ngx_http_get_module_loc_conf(r, ngx_http_core_module);
 
         ngx_memzero(&of, sizeof(ngx_open_file_info_t));
 
@@ -394,18 +395,23 @@ ngx_http_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t *script,
         of.errors = clcf->open_file_cache_errors;
         of.events = clcf->open_file_cache_events;
 
+        if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
+            /* simulate successful logging */
+            return len;
+        }
+
         if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
             != NGX_OK)
         {
             if (of.err == 0) {
-                /* simulate successfull logging */
+                /* simulate successful logging */
                 return len;
             }
 
             ngx_log_error(NGX_LOG_ERR, r->connection->log, of.err,
                           "testing \"%s\" existence failed", path.data);
 
-            /* simulate successfull logging */
+            /* simulate successful logging */
             return len;
         }
 
@@ -413,7 +419,7 @@ ngx_http_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t *script,
             ngx_log_error(NGX_LOG_ERR, r->connection->log, NGX_ENOTDIR,
                           "testing \"%s\" existence failed", path.data);
 
-            /* simulate successfull logging */
+            /* simulate successful logging */
             return len;
         }
     }
@@ -422,7 +428,7 @@ ngx_http_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t *script,
                             script->values->elts)
         == NULL)
     {
-        /* simulate successfull logging */
+        /* simulate successful logging */
         return len;
     }
 
@@ -441,12 +447,17 @@ ngx_http_log_script_write(ngx_http_request_t *r, ngx_http_log_script_t *script,
     of.min_uses = llcf->open_file_cache_min_uses;
     of.directio = NGX_OPEN_FILE_DIRECTIO_OFF;
 
+    if (ngx_http_set_disable_symlinks(r, clcf, &log, &of) != NGX_OK) {
+        /* simulate successful logging */
+        return len;
+    }
+
     if (ngx_open_cached_file(llcf->open_file_cache, &log, &of, r->pool)
         != NGX_OK)
     {
         ngx_log_error(NGX_LOG_CRIT, r->connection->log, ngx_errno,
                       "%s \"%s\" failed", of.failed, log.data);
-        /* simulate successfull logging */
+        /* simulate successful logging */
         return len;
     }
 
@@ -971,7 +982,7 @@ buffer:
 
         if (buf == NGX_ERROR) {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
-                               "invalid parameter \"%V\"", &value[3]);
+                               "invalid buffer value \"%V\"", &name);
             return NGX_CONF_ERROR;
         }
 
@@ -1003,6 +1014,12 @@ ngx_http_log_set_format(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
     ngx_str_t           *value;
     ngx_uint_t           i;
     ngx_http_log_fmt_t  *fmt;
+
+    if (cf->cmd_type != NGX_HTTP_MAIN_CONF) {
+        ngx_conf_log_error(NGX_LOG_WARN, cf, 0,
+                           "the \"log_format\" directive may be used "
+                           "only on \"http\" level");
+    }
 
     value = cf->args->elts;
 
@@ -1242,7 +1259,7 @@ ngx_http_log_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             s.data = value[i].data + 9;
 
             inactive = ngx_parse_time(&s, 1);
-            if (inactive < 0) {
+            if (inactive == (time_t) NGX_ERROR) {
                 goto failed;
             }
 
@@ -1265,7 +1282,7 @@ ngx_http_log_open_file_cache(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
             s.data = value[i].data + 6;
 
             valid = ngx_parse_time(&s, 1);
-            if (valid < 0) {
+            if (valid == (time_t) NGX_ERROR) {
                 goto failed;
             }
 

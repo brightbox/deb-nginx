@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -165,6 +166,9 @@ typedef struct {
     ngx_uint_t                       cache_use_stale;
     ngx_uint_t                       cache_methods;
 
+    ngx_flag_t                       cache_lock;
+    ngx_msec_t                       cache_lock_timeout;
+
     ngx_array_t                     *cache_valid;
     ngx_array_t                     *cache_bypass;
     ngx_array_t                     *no_cache;
@@ -295,6 +299,8 @@ struct ngx_http_upstream_s {
                                          ngx_int_t rc);
     ngx_int_t                      (*rewrite_redirect)(ngx_http_request_t *r,
                                          ngx_table_elt_t *h, size_t prefix);
+    ngx_int_t                      (*rewrite_cookie)(ngx_http_request_t *r,
+                                         ngx_table_elt_t *h);
 
     ngx_msec_t                       timeout;
 
@@ -328,6 +334,13 @@ typedef struct {
 } ngx_http_upstream_next_t;
 
 
+typedef struct {
+    ngx_str_t   key;
+    ngx_str_t   value;
+    ngx_uint_t  skip_empty;
+} ngx_http_upstream_param_t;
+
+
 ngx_int_t ngx_http_upstream_header_variable(ngx_http_request_t *r,
     ngx_http_variable_value_t *v, uintptr_t data);
 
@@ -336,6 +349,8 @@ void ngx_http_upstream_init(ngx_http_request_t *r);
 ngx_http_upstream_srv_conf_t *ngx_http_upstream_add(ngx_conf_t *cf,
     ngx_url_t *u, ngx_uint_t flags);
 char *ngx_http_upstream_bind_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
+    void *conf);
+char *ngx_http_upstream_param_set_slot(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
 ngx_int_t ngx_http_upstream_hide_headers_hash(ngx_conf_t *cf,
     ngx_http_upstream_conf_t *conf, ngx_http_upstream_conf_t *prev,

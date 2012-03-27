@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -371,6 +372,10 @@ main(int argc, char *const *argv)
             return 1;
         }
 
+        ngx_daemonized = 1;
+    }
+
+    if (ngx_inherited) {
         ngx_daemonized = 1;
     }
 

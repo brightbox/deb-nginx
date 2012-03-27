@@ -1,7 +1,13 @@
 #!/usr/bin/make -f
 
-CFLAGS = -Wall -g
-
+CFLAGS = `dpkg-buildflags --get CFLAGS`
+CFLAGS += -Wall
+CFLAGS += `dpkg-buildflags --get CPPFLAGS`
+LDFLAGS = `dpkg-buildflags --get LDFLAGS`
+# export necessary for (hardening) flags for perl
+# (src/http/modules/perl/Makefile.PL).
+export CFLAGS LDFLAGS
+     
 FLAVOURS:=full light extras
 
 BUILDDIR_full = $(CURDIR)/debian/build-full
@@ -15,10 +21,14 @@ ifeq ($(DEB_BUILD_ARCH),sparc)
 	CONFIGURE_OPTS = --with-cc-opt="-m32 -mcpu=ultrasparc"
 endif
 
-ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
-	CFLAGS += -O0
+
+ifneq (,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	NUMJOBS = $(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+	ifeq (${NUMJOBS}, 0)
+		NUMJOBS = 1
+	endif
 else
-	CFLAGS += -O2
+	NUMJOBS = 1
 endif
 
 config.sub:
@@ -44,7 +54,7 @@ config.env.%:
 	cp -Pa $(CURDIR)/man $(BUILDDIR_$*)/
 
 config.status.full: config.env.full config.sub config.guess
-	cd $(BUILDDIR_full) && ./configure \
+	cd $(BUILDDIR_full) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
 	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
 	    --error-log-path=/var/log/nginx/error.log \
@@ -72,6 +82,7 @@ config.status.full: config.env.full config.sub config.guess
 	    --with-md5=/usr/include/openssl \
 	    --with-mail \
 	    --with-mail_ssl_module \
+	    --add-module=$(MODULESDIR)/nginx-auth-pam \
 	    --add-module=$(MODULESDIR)/nginx-echo \
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
 	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
@@ -79,7 +90,7 @@ config.status.full: config.env.full config.sub config.guess
 	touch $@
 
 config.status.light: config.env.light config.sub config.guess
-	cd $(BUILDDIR_light) && ./configure \
+	cd $(BUILDDIR_light) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
 	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
 	    --error-log-path=/var/log/nginx/error.log \
@@ -109,7 +120,7 @@ config.status.light: config.env.light config.sub config.guess
 	touch $@
 
 config.status.extras: config.env.extras config.sub config.guess
-	cd $(BUILDDIR_extras) && ./configure \
+	cd $(BUILDDIR_extras) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
 	    --prefix=/etc/nginx \
 	    --conf-path=/etc/nginx/nginx.conf \
 	    --error-log-path=/var/log/nginx/error.log \
@@ -142,15 +153,17 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --with-md5=/usr/include/openssl \
 	    --with-mail \
 	    --with-mail_ssl_module \
+	    --add-module=$(MODULESDIR)/nginx-auth-pam \
+	    --add-module=$(MODULESDIR)/chunkin-nginx-module \
+	    --add-module=$(MODULESDIR)/headers-more-nginx-module \
 	    --add-module=$(MODULESDIR)/nginx-development-kit \
-	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
 	    --add-module=$(MODULESDIR)/nginx-echo \
-	    --add-module=$(MODULESDIR)/nginx-lua \
 	    --add-module=$(MODULESDIR)/nginx-http-push \
+	    --add-module=$(MODULESDIR)/nginx-lua \
+	    --add-module=$(MODULESDIR)/nginx-upload-module \
 	    --add-module=$(MODULESDIR)/nginx-upload-progress \
 	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
-	    --add-module=$(MODULESDIR)/headers-more-nginx-module \
-	    --add-module=$(MODULESDIR)/chunkin-nginx-module \
+	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 
@@ -160,13 +173,13 @@ config.status.%:
 build-arch.%: config.status.%
 	dh_testdir
 	dh_prep
-	$(MAKE) -C $(BUILDDIR_$*) build
+	$(MAKE) -j$(NUMJOBS) -C $(BUILDDIR_$*) build
 
 build-arch: $(foreach flavour,$(FLAVOURS),build-arch.$(flavour))
 	dh_testdir
 	touch $@
 
-build-dbg.%:
+build-dbg.%: install
 	dh_testdir
 	dh_strip --package=nginx-$(*) --dbg-package=nginx-$(*)-dbg
 
@@ -206,6 +219,8 @@ binary-indep: install
 	dh_installexamples -i
 	dh_installinit -r --no-start -i --init-script=nginx
 	cp debian/logrotate debian/nginx-common/etc/logrotate.d/nginx
+	mkdir -p debian/nginx-common/lib/systemd/system
+	cp debian/nginx-common.service debian/nginx-common/lib/systemd/system/nginx.service
 	dh_link -i
 	dh_compress -i
 	dh_fixperms -i

@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -661,6 +662,10 @@ sendfile(r, filename, offset = -1, bytes = 0)
     of.min_uses = clcf->open_file_cache_min_uses;
     of.errors = clcf->open_file_cache_errors;
     of.events = clcf->open_file_cache_events;
+
+    if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
+        XSRETURN_EMPTY;
+    }
 
     if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
         != NGX_OK)

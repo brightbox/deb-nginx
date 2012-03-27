@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -117,8 +118,8 @@ static ngx_http_module_t  ngx_http_limit_conn_module_ctx = {
     NULL,                                  /* create server configuration */
     NULL,                                  /* merge server configuration */
 
-    ngx_http_limit_conn_create_conf,       /* create location configration */
-    ngx_http_limit_conn_merge_conf         /* merge location configration */
+    ngx_http_limit_conn_create_conf,       /* create location configuration */
+    ngx_http_limit_conn_merge_conf         /* merge location configuration */
 };
 
 
@@ -158,8 +159,6 @@ ngx_http_limit_conn_handler(ngx_http_request_t *r)
         return NGX_DECLINED;
     }
 
-    r->main->limit_conn_set = 1;
-
     lccf = ngx_http_get_module_loc_conf(r, ngx_http_limit_conn_module);
     limits = lccf->limits.elts;
 
@@ -185,6 +184,8 @@ ngx_http_limit_conn_handler(ngx_http_request_t *r)
                           &ctx->var, vv);
             continue;
         }
+
+        r->main->limit_conn_set = 1;
 
         hash = ngx_crc32_short(vv->data, len);
 
@@ -324,20 +325,15 @@ ngx_http_limit_conn_lookup(ngx_rbtree_t *rbtree, ngx_http_variable_value_t *vv,
 
         /* hash == node->key */
 
-        do {
-            lcn = (ngx_http_limit_conn_node_t *) &node->color;
+        lcn = (ngx_http_limit_conn_node_t *) &node->color;
 
-            rc = ngx_memn2cmp(vv->data, lcn->data,
-                              (size_t) vv->len, (size_t) lcn->len);
-            if (rc == 0) {
-                return node;
-            }
+        rc = ngx_memn2cmp(vv->data, lcn->data,
+                          (size_t) vv->len, (size_t) lcn->len);
+        if (rc == 0) {
+            return node;
+        }
 
-            node = (rc < 0) ? node->left : node->right;
-
-        } while (node != sentinel && hash == node->key);
-
-        break;
+        node = (rc < 0) ? node->left : node->right;
     }
 
     return NULL;
@@ -483,7 +479,7 @@ ngx_http_limit_conn_merge_conf(ngx_conf_t *cf, void *parent, void *child)
     ngx_http_limit_conn_conf_t *conf = child;
 
     if (conf->limits.elts == NULL) {
-        *conf = *prev;
+        conf->limits = prev->limits;
     }
 
     ngx_conf_merge_uint_value(conf->log_level, prev->log_level, NGX_LOG_ERR);

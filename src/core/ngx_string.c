@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -1657,6 +1658,10 @@ ngx_escape_html(u_char *dst, u_char *src, size_t size)
                 len += sizeof("&amp;") - 2;
                 break;
 
+            case '"':
+                len += sizeof("&quot;") - 2;
+                break;
+
             default:
                 break;
             }
@@ -1682,6 +1687,11 @@ ngx_escape_html(u_char *dst, u_char *src, size_t size)
         case '&':
             *dst++ = '&'; *dst++ = 'a'; *dst++ = 'm'; *dst++ = 'p';
             *dst++ = ';';
+            break;
+
+        case '"':
+            *dst++ = '&'; *dst++ = 'q'; *dst++ = 'u'; *dst++ = 'o';
+            *dst++ = 't'; *dst++ = ';';
             break;
 
         default:

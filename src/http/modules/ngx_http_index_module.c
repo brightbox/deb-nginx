@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -61,8 +62,8 @@ static ngx_http_module_t  ngx_http_index_module_ctx = {
     NULL,                                  /* create server configuration */
     NULL,                                  /* merge server configuration */
 
-    ngx_http_index_create_loc_conf,        /* create location configration */
-    ngx_http_index_merge_loc_conf          /* merge location configration */
+    ngx_http_index_create_loc_conf,        /* create location configuration */
+    ngx_http_index_merge_loc_conf          /* merge location configuration */
 };
 
 
@@ -209,6 +210,10 @@ ngx_http_index_handler(ngx_http_request_t *r)
         of.errors = clcf->open_file_cache_errors;
         of.events = clcf->open_file_cache_events;
 
+        if (ngx_http_set_disable_symlinks(r, clcf, &path, &of) != NGX_OK) {
+            return NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
+
         if (ngx_open_cached_file(clcf->open_file_cache, &path, &of, r->pool)
             != NGX_OK)
         {
@@ -218,6 +223,14 @@ ngx_http_index_handler(ngx_http_request_t *r)
             if (of.err == 0) {
                 return NGX_HTTP_INTERNAL_SERVER_ERROR;
             }
+
+#if (NGX_HAVE_OPENAT)
+            if (of.err == NGX_EMLINK
+                || of.err == NGX_ELOOP)
+            {
+                return NGX_HTTP_FORBIDDEN;
+            }
+#endif
 
             if (of.err == NGX_ENOTDIR
                 || of.err == NGX_ENAMETOOLONG
@@ -296,10 +309,22 @@ ngx_http_index_test_dir(ngx_http_request_t *r, ngx_http_core_loc_conf_t *clcf,
     of.valid = clcf->open_file_cache_valid;
     of.errors = clcf->open_file_cache_errors;
 
+    if (ngx_http_set_disable_symlinks(r, clcf, &dir, &of) != NGX_OK) {
+        return NGX_HTTP_INTERNAL_SERVER_ERROR;
+    }
+
     if (ngx_open_cached_file(clcf->open_file_cache, &dir, &of, r->pool)
         != NGX_OK)
     {
         if (of.err) {
+
+#if (NGX_HAVE_OPENAT)
+            if (of.err == NGX_EMLINK
+                || of.err == NGX_ELOOP)
+            {
+                return NGX_HTTP_FORBIDDEN;
+            }
+#endif
 
             if (of.err == NGX_ENOENT) {
                 *last = c;

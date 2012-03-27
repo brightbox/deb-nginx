@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -9,7 +10,7 @@
 
 
 #define NGX_HTTP_MAX_URI_CHANGES           10
-#define NGX_HTTP_MAX_SUBREQUESTS           50
+#define NGX_HTTP_MAX_SUBREQUESTS           200
 
 /* must be 2^n */
 #define NGX_HTTP_LC_HEADER_LEN             32
@@ -74,6 +75,7 @@
 #define NGX_HTTP_MOVED_TEMPORARILY         302
 #define NGX_HTTP_SEE_OTHER                 303
 #define NGX_HTTP_NOT_MODIFIED              304
+#define NGX_HTTP_TEMPORARY_REDIRECT        307
 
 #define NGX_HTTP_BAD_REQUEST               400
 #define NGX_HTTP_UNAUTHORIZED              401
@@ -477,7 +479,7 @@ struct ngx_http_request_s {
 
     /*
      * instead of using the request context data in
-     * ngx_http_limit_zone_module and ngx_http_limit_req_module
+     * ngx_http_limit_conn_module and ngx_http_limit_req_module
      * we use the single bits in the request structure
      */
     unsigned                          limit_conn_set:1;

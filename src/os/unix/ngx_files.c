@@ -1,6 +1,7 @@
 
 /*
  * Copyright (C) Igor Sysoev
+ * Copyright (C) Nginx, Inc.
  */
 
 
@@ -464,7 +465,7 @@ ngx_unlock_fd(ngx_fd_t fd)
 }
 
 
-#if (NGX_HAVE_POSIX_FADVISE)
+#if (NGX_HAVE_POSIX_FADVISE) && !(NGX_HAVE_F_READAHEAD)
 
 ngx_int_t
 ngx_read_ahead(ngx_fd_t fd, size_t n)

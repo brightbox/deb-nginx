@@ -31,6 +31,8 @@ server {
 		# First attempt to serve request as file, then
 		# as directory, then fall back to index.html
 		try_files $uri $uri/ /index.html;
+		# Uncomment to enable naxsi on this location
+		# include /etc/nginx/naxsi.rules
 	}
 
 	location /doc/ {
@@ -39,6 +41,12 @@ server {
 		allow 127.0.0.1;
 		deny all;
 	}
+
+	# Only for nginx-naxsi : process denied requests
+	#location /RequestDenied {
+		# For example, return an error code
+		#return 418;
+	#}
 
 	#error_page 404 /404.html;
 

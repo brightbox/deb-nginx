@@ -1,3 +1,9 @@
+nginx (1:1.1.19-1bbox1) lucid; urgency=low
+
+  * New upstream version of Passenger, 3.0.12
+
+ -- John Leach <john@brightbox.co.uk>  Sat, 14 Apr 2012 22:32:49 +0100
+
 nginx (1.1.19-1) unstable; urgency=high
 
   [Cyril Lavier]

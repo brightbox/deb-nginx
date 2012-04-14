@@ -1,3 +1,43 @@
+nginx (1.1.19-1) unstable; urgency=high
+
+  [Cyril Lavier]
+  * New upstream release.
+    + Fixed a buffer overflow in the ngx_http_mp4_module. See: CVE-2012-2089
+      for more details.
+  * debian/copyright:
+    + Updated licenses.
+  * debian/nginx-extras.postinst, debian/nginx-full.postinst,
+    debian/nginx-light.postinst, debian/nginx-naxsi.postinst:
+    + Removing the debug markers. (Closes: #667894)
+  * debian/control, debian/rules, debian/copyright,
+    debian/modules/nginx-dav-ext-module:
+    + Added nginx-dav-ext-module in full and extras.
+  * debian/modules/naxsi:
+    + Updated naxsi to the SVN snapshot (r280) to fix the licence issue with
+      OpenSSL.
+
+  [Kartik Mistry]
+  * Misc cleanups in debian/control, debian/copyright.
+
+ -- Cyril Lavier <cyril.lavier@davromaniak.eu>  Fri, 13 Apr 2012 16:58:59 +0530
+
+nginx (1.1.18-1) unstable; urgency=low
+
+  [Cyril Lavier]
+  * New upstream release.
+  * New binaries introduced: nginx-naxsi, nginx-naxsi-dbg.
+  * debian/modules/nginx-cache-purge:
+    + Added nginx cache purge 1.5 to nginx-naxsi.
+  * debian/rules, debian/control, debian/nginx-naxsi.dirs,
+    debian/nginx-naxsi.install, debian/nginx-naxsi.postinst,
+    debian/nginx-naxsi.postrm, debian/nginx-naxsi.prerm,
+    debian/modules/naxsi, debian/conf/naxsi_core.rules,
+    debian/modules/README.Modules-versions, debian/conf/nginx.conf:
+    + Added nginx-naxsi flavour.
+    + Added naxsi 0.44 to nginx-naxsi.
+
+ -- Cyril Lavier <cyril.lavier@davromaniak.eu>  Thu, 29 Mar 2012 22:43:07 +0530
+
 nginx (1:1.1.17-2bbox1) lucid; urgency=low
 
   * Updated passenger packaging

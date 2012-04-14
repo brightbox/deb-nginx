@@ -7,12 +7,13 @@ LDFLAGS = `dpkg-buildflags --get LDFLAGS`
 # export necessary for (hardening) flags for perl
 # (src/http/modules/perl/Makefile.PL).
 export CFLAGS LDFLAGS
-     
-FLAVOURS:=full light extras
+
+FLAVOURS:=full light extras naxsi
 
 BUILDDIR_full = $(CURDIR)/debian/build-full
 BUILDDIR_light = $(CURDIR)/debian/build-light
 BUILDDIR_extras = $(CURDIR)/debian/build-extras
+BUILDDIR_naxsi = $(CURDIR)/debian/build-naxsi
 MODULESDIR = $(CURDIR)/debian/modules
 BASEDIR = $(CURDIR)
 
@@ -85,6 +86,7 @@ config.status.full: config.env.full config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-auth-pam \
 	    --add-module=$(MODULESDIR)/nginx-echo \
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
+	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
 	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
             $(CONFIGURE_OPTS) >$@
 	touch $@
@@ -164,7 +166,34 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-upload-progress \
 	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
+	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
             $(CONFIGURE_OPTS) >$@
+	touch $@
+
+config.status.naxsi: config.env.naxsi config.sub config.guess
+	cd $(BUILDDIR_naxsi) && CFLAGS="$(CFLAGS)" CORE_LINK="$(LDFLAGS)" ./configure  \
+	    --prefix=/etc/nginx \
+	    --conf-path=/etc/nginx/nginx.conf \
+	    --error-log-path=/var/log/nginx/error.log \
+	    --http-client-body-temp-path=/var/lib/nginx/body \
+	    --http-fastcgi-temp-path=/var/lib/nginx/fastcgi \
+	    --http-log-path=/var/log/nginx/access.log \
+	    --http-proxy-temp-path=/var/lib/nginx/proxy \
+	    --http-scgi-temp-path=/var/lib/nginx/scgi \
+	    --http-uwsgi-temp-path=/var/lib/nginx/uwsgi \
+	    --lock-path=/var/lock/nginx.lock \
+	    --pid-path=/var/run/nginx.pid \
+	    --with-http_ssl_module \
+	    --without-mail_pop3_module \
+	    --without-mail_smtp_module \
+	    --without-mail_imap_module \
+	    --without-http_uwsgi_module \
+	    --without-http_scgi_module \
+	    --with-ipv6 \
+	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
+	    --add-module=$(MODULESDIR)/nginx-cache-purge \
+	    --add-module=$(MODULESDIR)/naxsi/naxsi_src \
+	    $(CONFIGURE_OPTS) >$@
 	touch $@
 
 config.status.%:

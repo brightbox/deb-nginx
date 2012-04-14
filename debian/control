@@ -16,11 +16,11 @@ Build-Depends: autotools-dev,
                libssl-dev,
                libxslt1-dev,
                zlib1g-dev,
-               passenger-dev (>= 3.0.11), passenger-dev (<< 3.0.12)
+               passenger-dev (>= 3.0.12), passenger-dev (<< 3.0.13)
 Standards-Version: 3.9.3
 Homepage: http://nginx.net
-Vcs-Svn: svn://svn.debian.org/svn/collab-maint/deb-maint/nginx/trunk
-Vcs-Browser: http://svn.debian.org/wsvn/collab-maint/deb-maint/nginx/trunk
+Vcs-Git: git://github.com/brightbox/deb-nginx.git
+Vcs-Browser: https://github.com/brightbox/deb-nginx
 
 Package: nginx
 Architecture: all
@@ -69,7 +69,7 @@ Description: small, but very powerful and efficient web server (common files)
 Package: nginx-full
 Architecture: any
 Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
- passenger-common (>= 3.0.11), passenger-common (<< 3.0.12)
+ passenger-common (>= 3.0.12), passenger-common (<< 3.0.13)
 Provides: httpd, nginx
 Conflicts: nginx-extras, nginx-light, nginx-naxsi
 Description: nginx web server with full set of core modules
@@ -158,7 +158,7 @@ Depends: nginx-common (= ${source:Version}),
          ${misc:Depends},
          ${perl:Depends}, 
          ${shlibs:Depends},
-         passenger-common (>= 3.0.11), passenger-common (<< 3.0.12)
+         passenger-common (>= 3.0.12), passenger-common (<< 3.0.13)
 Provides: httpd, nginx
 Conflicts: nginx-full, nginx-light, nginx-naxsi
 Description: nginx web server with full set of core modules and extras

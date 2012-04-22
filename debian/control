@@ -68,7 +68,7 @@ Description: small, but very powerful and efficient web server (common files)
 
 Package: nginx-full
 Architecture: any
-Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends}
+Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends},
  passenger-common (>= 3.0.12), passenger-common (<< 3.0.13)
 Provides: httpd, nginx
 Conflicts: nginx-extras, nginx-light, nginx-naxsi

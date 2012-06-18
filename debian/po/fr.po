@@ -1,0 +1,35 @@
+# French PO file for nginx-naxsi-ui.
+# Copyright (C) 2012 Cyril Lavier
+# This file is distributed under the same license as the nginx-naxsi-ui package.
+# Cyril Lavier <cyril.lavier@davromaniak.eu>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: nginx\n"
+"Report-Msgid-Bugs-To: nginx@packages.debian.org\n"
+"POT-Creation-Date: 2012-06-17 20:16+0530\n"
+"PO-Revision-Date: 2012-05-09 09:32+0100\n"
+"Last-Translator: Cyril Lavier <cyril.lavier@davromaniak.eu>\n"
+"Language-Team: \n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Type: string
+#. Description
+#: ../nginx-naxsi-ui.templates:1001
+#| msgid ""
+#| "Please specify the hostname of the server where the naxsi Web Application "
+#| "Firewall's database should be located."
+msgid "Please specify the hostname of the server that will host the database"
+msgstr ""
+"Merci de fournir l'adresse du serveur qui doit accueillir la base de données "
+"de la l'application de pare-feu web naxsi."
+
+#. Type: string
+#. Description
+#: ../nginx-naxsi-ui.templates:1001
+#| msgid "Database host for naxsi:"
+msgid "Database host for naxsi:);"
+msgstr "Serveur hébergeant la base de données pour naxsi :"

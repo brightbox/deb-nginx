@@ -1,4 +1,6 @@
+#ifndef DDEBUG
 #define DDEBUG 0
+#endif
 #include "ddebug.h"
 
 #include "ngx_http_echo_foreach.h"
@@ -17,7 +19,7 @@ ngx_http_echo_it_variable(ngx_http_request_t *r,
 
     ctx = ngx_http_get_module_ctx(r, ngx_http_echo_module);
 
-    if (ctx->foreach != NULL) {
+    if (ctx && ctx->foreach != NULL) {
         choices = ctx->foreach->choices;
         i = ctx->foreach->next_choice;
         if (i < choices->nelts) {
@@ -29,9 +31,9 @@ ngx_http_echo_it_variable(ngx_http_request_t *r,
             v->valid = 1;
             v->no_cacheable = 1;
             v->not_found = 0;
-        }
 
-        return NGX_OK;
+            return NGX_OK;
+        }
     }
 
     v->not_found = 1;
@@ -72,7 +74,7 @@ ngx_http_echo_exec_echo_foreach_split(ngx_http_request_t *r,
 
     compound  = &computed_arg_elts[1];
 
-    dd("HEY coumpound len: %u", compound->len);
+    dd("HEY coumpound len: %u", (int) compound->len);
 
     ctx->foreach = ngx_palloc(r->pool, sizeof(ngx_http_echo_foreach_ctx_t));
 

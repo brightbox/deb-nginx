@@ -29,7 +29,7 @@ static void ngx_http_lua_set_by_lua_env(lua_State *L, ngx_http_request_t *r,
 
 ngx_int_t
 ngx_http_lua_set_by_chunk(lua_State *L, ngx_http_request_t *r, ngx_str_t *val,
-        ngx_http_variable_value_t *args, size_t nargs)
+        ngx_http_variable_value_t *args, size_t nargs, ngx_str_t *script)
 {
     size_t           i;
     ngx_int_t        rc;
@@ -39,6 +39,41 @@ ngx_http_lua_set_by_chunk(lua_State *L, ngx_http_request_t *r, ngx_str_t *val,
 #if (NGX_PCRE)
     ngx_pool_t      *old_pool;
 #endif
+
+    ngx_http_lua_ctx_t          *ctx;
+    ngx_http_cleanup_t          *cln;
+
+    dd("nargs: %d", (int) nargs);
+
+    ctx = ngx_http_get_module_ctx(r, ngx_http_lua_module);
+
+    if (ctx == NULL) {
+        ctx = ngx_pcalloc(r->pool, sizeof(ngx_http_lua_ctx_t));
+        if (ctx == NULL) {
+            return NGX_ERROR;
+        }
+
+        dd("setting new ctx: ctx = %p", ctx);
+
+        ctx->cc_ref = LUA_NOREF;
+        ctx->ctx_ref = LUA_NOREF;
+
+        ngx_http_set_ctx(r, ctx, ngx_http_lua_module);
+
+    } else {
+        ngx_http_lua_reset_ctx(r, L, ctx);
+    }
+
+    if (ctx->cleanup == NULL) {
+        cln = ngx_http_cleanup_add(r, 0);
+        if (cln == NULL) {
+            return NGX_ERROR;
+        }
+
+        cln->handler = ngx_http_lua_request_cleanup;
+        cln->data = r;
+        ctx->cleanup = &cln->handler;
+    }
 
     /*  set Lua VM panic handler */
     lua_atpanic(L, ngx_http_lua_atpanic);
@@ -135,6 +170,7 @@ ngx_http_lua_param_get(lua_State *L)
     ngx_http_variable_value_t       *v;
 
     idx = luaL_checkint(L, 2);
+    idx--;
 
     /*  get number of args from closure */
     n = luaL_checkint(L, lua_upvalueindex(1));
@@ -142,7 +178,7 @@ ngx_http_lua_param_get(lua_State *L)
     /*  get args from closure */
     v = lua_touserdata(L, lua_upvalueindex(2));
 
-    if (idx < 0 || idx > n-1) {
+    if (idx < 0 || idx > n - 1) {
         lua_pushnil(L);
 
     } else {
@@ -195,7 +231,7 @@ ngx_http_lua_set_by_lua_env(lua_State *L, ngx_http_request_t *r, size_t nargs,
 
     /*  {{{ initialize ngx.* namespace */
 
-    lua_createtable(L, 0 /* narr */, 67 /* nrec */);    /*  ngx.* */
+    lua_createtable(L, 0 /* narr */, 72 /* nrec */);    /*  ngx.* */
 
     ngx_http_lua_inject_internal_utils(r->connection->log, L);
 

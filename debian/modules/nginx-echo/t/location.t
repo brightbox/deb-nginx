@@ -4,7 +4,7 @@ use lib 'lib';
 
 use Test::Nginx::Socket;
 
-plan tests => 2 * blocks();
+plan tests => 2 * blocks() + 1;
 
 #$Test::Nginx::LWP::LogLevel = 'debug';
 
@@ -338,6 +338,7 @@ Foo Bar
 
 
 === TEST 17: let subrequest to read the main request's request body
+--- SKIP
 --- config
     location /main {
         echo_location /sub;
@@ -473,7 +474,9 @@ GET /main
 1
 1
 1
---- timeout: 2
+--- timeout: 5
+--- no_error_log
+[error]
 
 
 
@@ -539,4 +542,19 @@ hi(world);
     GET /main?c=hi
 --- response_body chop
 hi(world people);
+
+
+
+=== TEST 25: sanity (HEAD)
+--- config
+    location /main {
+        echo_location /sub;
+        echo_location /sub;
+    }
+    location /sub {
+        echo hello;
+    }
+--- request
+    HEAD /main
+--- response_body
 

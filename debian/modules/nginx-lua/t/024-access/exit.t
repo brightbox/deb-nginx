@@ -4,20 +4,21 @@ use lib 'lib';
 use Test::Nginx::Socket;
 
 #repeat_each(20000);
-#repeat_each(1);
 repeat_each(2);
+
 #master_on();
 #workers(1);
 #log_level('debug');
 #log_level('warn');
 #worker_connections(1024);
 
-plan tests => blocks() * repeat_each() * 2;
+plan tests => repeat_each() * (blocks() * 2);
 
 $ENV{TEST_NGINX_MEMCACHED_PORT} ||= 11211;
 $ENV{TEST_NGINX_MYSQL_PORT} ||= 3306;
 
-$ENV{LUA_CPATH} ||= '/usr/local/openresty/lualib/?.so;;';
+$ENV{LUA_CPATH} ||=
+    '/usr/local/openresty-debug/lualib/?.so;/usr/local/openresty/lualib/?.so;;';
 
 no_long_string();
 
@@ -59,8 +60,11 @@ GET /lua
     }
 --- request
 GET /lua
---- error_code:
---- response_body:
+--- ignore_response
+--- no_error_log
+[alert]
+--- error_log
+attempt to call ngx.exit after sending out the headers
 
 
 
@@ -507,4 +511,32 @@ morning
 --- response_body
 This is our own content
 --- error_code: 410
+
+
+
+=== TEST 17: exit(404) after I/O
+--- config
+    error_page 400 /400.html;
+    error_page 404 /404.html;
+    location /foo {
+        access_by_lua '
+            ngx.location.capture("/sleep")
+            ngx.exit(ngx.HTTP_NOT_FOUND)
+        ';
+        echo Hello;
+    }
+
+    location /sleep {
+        echo_sleep 0.002;
+    }
+--- user_files
+>>> 400.html
+Bad request, dear...
+>>> 404.html
+Not found, dear...
+--- request
+    GET /bah
+--- response_body
+Not found, dear...
+--- error_code: 404
 

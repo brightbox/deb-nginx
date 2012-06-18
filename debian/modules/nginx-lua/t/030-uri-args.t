@@ -982,3 +982,147 @@ for my $k (@k) {
 CORE::join("", @k);
 --- timeout: 4
 
+
+
+=== TEST 41: rewrite uri and args (multi-value args)
+--- config
+    location /bar {
+        echo $server_protocol $query_string;
+    }
+    location /foo {
+        #rewrite ^ /bar?hello? break;
+        rewrite_by_lua '
+            ngx.req.set_uri_args({a = 3, b = {5, 6}})
+            ngx.req.set_uri("/bar")
+        ';
+        proxy_pass http://127.0.0.1:$TEST_NGINX_CLIENT_PORT;
+    }
+--- request
+    GET /foo?world
+--- response_body
+HTTP/1.0 a=3&b=5&b=6
+
+
+
+=== TEST 42: ngx.decode_args (sanity)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = "a=bar&b=foo"
+            args = ngx.decode_args(args)
+            ngx.say("a = ", args.a)
+            ngx.say("b = ", args.b)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+a = bar
+b = foo
+
+
+
+=== TEST 43: ngx.decode_args (multi-value)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = "a=bar&b=foo&a=baz"
+            args = ngx.decode_args(args)
+            ngx.say("a = ", table.concat(args.a, ", "))
+            ngx.say("b = ", args.b)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+a = bar, baz
+b = foo
+
+
+
+=== TEST 44: ngx.decode_args (empty string)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = ""
+            args = ngx.decode_args(args)
+            ngx.say("n = ", #args)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+n = 0
+
+
+
+=== TEST 45: ngx.decode_args (boolean args)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = "a&b"
+            args = ngx.decode_args(args)
+            ngx.say("a = ", args.a)
+            ngx.say("b = ", args.b)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+a = true
+b = true
+
+
+
+=== TEST 46: ngx.decode_args (empty value args)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = "a=&b="
+            args = ngx.decode_args(args)
+            ngx.say("a = ", args.a)
+            ngx.say("b = ", args.b)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+a = 
+b = 
+
+
+
+=== TEST 47: ngx.decode_args (max_args = 1)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = "a=bar&b=foo"
+            args = ngx.decode_args(args, 1)
+            ngx.say("a = ", args.a)
+            ngx.say("b = ", args.b)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+a = bar
+b = nil
+
+
+
+=== TEST 48: ngx.decode_args (max_args = -1)
+--- config
+    location /lua {
+        content_by_lua '
+            local args = "a=bar&b=foo"
+            args = ngx.decode_args(args, -1)
+            ngx.say("a = ", args.a)
+            ngx.say("b = ", args.b)
+        ';
+    }
+--- request
+GET /lua
+--- response_body
+a = bar
+b = foo
+

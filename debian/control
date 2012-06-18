@@ -17,7 +17,7 @@ Build-Depends: autotools-dev,
                libxslt1-dev,
                po-debconf,
                zlib1g-dev,
-               passenger-dev (>= 3.0.12), passenger-dev (<< 3.0.13)
+               passenger-dev (>= 3.0.13), passenger-dev (<< 3.0.14)
 Standards-Version: 3.9.3
 Homepage: http://nginx.net
 Vcs-Git: git://github.com/brightbox/deb-nginx.git
@@ -67,7 +67,7 @@ Description: small, powerful, scalable web/proxy server - common files
 Package: nginx-full
 Architecture: any
 Depends: nginx-common (= ${source:Version}), ${misc:Depends}, ${shlibs:Depends},
- passenger-common (>= 3.0.12), passenger-common (<< 3.0.13)
+ passenger-common (>= 3.0.13), passenger-common (<< 3.0.14)
 Provides: httpd, nginx
 Conflicts: nginx-extras, nginx-light, nginx-naxsi
 Description: nginx web/proxy server (standard version)
@@ -149,7 +149,7 @@ Depends: nginx-common (= ${source:Version}),
          ${misc:Depends},
          ${perl:Depends}, 
          ${shlibs:Depends},
-         passenger-common (>= 3.0.12), passenger-common (<< 3.0.13)
+         passenger-common (>= 3.0.13), passenger-common (<< 3.0.14)
 Provides: httpd, nginx
 Conflicts: nginx-full, nginx-light, nginx-naxsi
 Description: nginx web/proxy server (extended version)

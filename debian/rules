@@ -89,6 +89,7 @@ config.status.full: config.env.full config.sub config.guess
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
 	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
 	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
+			--add-module=$(MODULESDIR)/nginx-upstream-check-module \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 
@@ -170,6 +171,7 @@ config.status.extras: config.env.extras config.sub config.guess
 	    --add-module=/usr/lib/phusion-passenger/ext/nginx \
 	    --add-module=$(MODULESDIR)/nginx-upstream-fair \
 	    --add-module=$(MODULESDIR)/nginx-dav-ext-module \
+			--add-module=$(MODULESDIR)/nginx-upstream-check-module \
             $(CONFIGURE_OPTS) >$@
 	touch $@
 

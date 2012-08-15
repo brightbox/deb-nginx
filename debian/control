@@ -100,7 +100,7 @@ Description: nginx web/proxy server (standard version)
  MAIL MODULES: Mail Core, IMAP, POP3, SMTP, SSL.
  .
  THIRD PARTY MODULES: Auth PAM, DAV Ext, Echo, Passenger, Upstream
- Fair Queue.
+ Fair Queue, Health Check
 
 Package: nginx-full-dbg
 Architecture: any
@@ -198,7 +198,7 @@ Description: nginx web/proxy server (extended version)
  .
  THIRD PARTY MODULES: Auth PAM, Chunkin, DAV Ext, Echo, Embedded Lua,
  HttpHeadersMore, http push, Nginx Development Kit, Passenger, Upload
- module, Upload Progress, Upstream Fair Queue.
+ module, Upload Progress, Upstream Fair Queue, Health Check
 
 Package: nginx-extras-dbg
 Architecture: any

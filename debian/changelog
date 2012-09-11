@@ -11,15 +11,41 @@ nginx (1:1.2.2-1bbox1) precise; urgency=low
 
  -- John Leach <john@brightbox.co.uk>  Fri, 27 Jul 2012 12:14:38 +0100
 
-nginx (1.2.2-0) UNRELEASED; urgency=medium
+nginx (1.2.2-0) unstable; urgency=medium
 
+  * New upstream release. (Closes: #683704)
   * debian/nginx-common.nginx.init
     + Added --retry to start-stop-daemon. (Closes: #682360)
     + Added $named to Required-Start/Stop. (Closes: #679879)
+    + Added some other modifications after testing. (LP: #1033856)
   * debian/rules:
     + Added -DFORTIFY_SOURCE=2 -fstack-protector to build flags. (Closes: #680712)
+  * debian/nginx-common.install:
+    + Moved default docs to /usr/share/nginx/html. (Closes: #1031515)
+  * debian/rules:
+    + Set prefix to /usr/share/nginx.
+  * debian/po/fr.po
+    + Updated French translation file. (Closes: #679601)
+  * debian/logrotate:
+    + Removed semicolon after an fi statement. (Closes: #683870)
+  * debian/copyright:
+    + Removed trailing slash from File: fields.
 
- -- Michael Lustfield <michael@lustfield.net>  Sun, 22 Jul 2012 03:42:49 +0000
+ -- Michael Lustfield <michael@lustfield.net>  Wed, 08 Aug 2012 23:43:38 +0000
+
+
+nginx (1.2.1-2.2) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Fix "removes files that were installed by another package":
+    don't remove directories that are owned by (and removed from) nginx-common
+    from nginx-extras.postrm. This seems to have been the idea in commit e30a854
+    ("Moved configuration purging to nginx-common.") except that it was added
+    in nginx-common.postrm without being removed in nginx-extras.postrm.
+    Remove nginx-extras.postrm since it's empty after this change.
+    (Closes: #681758)
+
+ -- gregor herrmann <gregoa@debian.org>  Sat, 04 Aug 2012 18:13:10 +0200
 
 nginx (1:1.2.1-1bbox1) precise; urgency=low
 

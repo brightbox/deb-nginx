@@ -1,3 +1,10 @@
+nginx (1:1.2.3-1bbox1) precise; urgency=low
+
+  * New upstream release, 1.2.3
+  * New upstream version of Passenger, 3.0.17
+
+ -- John Leach <john@brightbox.co.uk>  Tue, 11 Sep 2012 15:44:04 +0100
+
 nginx (1:1.2.2-1bbox2) precise; urgency=low
 
   * Added upstream-check-module

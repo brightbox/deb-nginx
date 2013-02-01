@@ -335,8 +335,11 @@ ngx_http_check_begin_handler(ngx_event_t *event)
 
     ngx_add_timer(event, ucscf->check_interval/2);
 
-    /* This process is processing the event now. */
-    if (peer->shm->owner == ngx_pid) {
+    /* This process is processing this peer now. */
+    if ((peer->shm->owner == ngx_pid) ||
+        (peer->pc.connection != NULL) ||
+        (peer->check_timeout_ev.timer_set)) {
+
         return;
     }
 
@@ -1223,11 +1226,14 @@ ngx_http_check_clean_event(ngx_http_check_peer_t *peer)
 
     c = peer->pc.connection;
 
-    ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
-                   "http check clean event: index:%ui, fd: %d",
-                   peer->index, c->fd);
+    if (c) {
+        ngx_log_debug2(NGX_LOG_DEBUG_HTTP, c->log, 0,
+                "http check clean event: index:%ui, fd: %d",
+                peer->index, c->fd);
 
-    ngx_close_connection(c);
+        ngx_close_connection(c);
+        peer->pc.connection = NULL;
+    }
 
     if (peer->check_timeout_ev.timer_set) {
         ngx_del_timer(&peer->check_timeout_ev);
@@ -1297,6 +1303,9 @@ ngx_http_check_clear_all_events()
         return;
     }
 
+    ngx_log_error(NGX_LOG_NOTICE, ngx_cycle->log, 0,
+                  "clear all the events on %P ", ngx_pid);
+
     has_cleared = 1;
 
     peers = check_peers_ctx;
@@ -1309,10 +1318,13 @@ ngx_http_check_clear_all_events()
         }
 
         /* Be careful, The shared memory may have been freed after reload */
-        if (peer->check_timeout_ev.timer_set) {
-            c = peer->pc.connection;
-            ngx_close_connection(c);
-            ngx_del_timer(&peer->check_timeout_ev);
+        if (peer[i].check_timeout_ev.timer_set) {
+            c = peer[i].pc.connection;
+            if (c) {
+                ngx_close_connection(c);
+                peer[i].pc.connection = NULL;
+            }
+            ngx_del_timer(&peer[i].check_timeout_ev);
         }
 
         if (peer[i].pool != NULL) {
@@ -1327,7 +1339,7 @@ static ngx_int_t
 ngx_http_upstream_check_init_shm_zone(ngx_shm_zone_t *shm_zone, void *data)
 {
     size_t                               size;
-    ngx_str_t                            oshm_name;
+    ngx_str_t                            oshm_name = ngx_null_string;
     ngx_uint_t                           i, same, number;
     ngx_shm_zone_t                      *oshm_zone;
     ngx_slab_pool_t                     *shpool;
@@ -1616,6 +1628,7 @@ ngx_shared_memory_find(ngx_cycle_t *cycle, ngx_str_t *name, void *tag)
 ngx_int_t
 ngx_http_upstream_check_status_handler(ngx_http_request_t *r)
 {
+    size_t                          buffer_size;
     ngx_int_t                       rc;
     ngx_buf_t                      *b;
     ngx_uint_t                      i;
@@ -1662,7 +1675,10 @@ ngx_http_upstream_check_status_handler(ngx_http_request_t *r)
     peer = peers->peers.elts;
     peer_shm = peers_shm->peers;
 
-    b = ngx_create_temp_buf(r->pool, 16 * ngx_pagesize);
+    buffer_size = peers->peers.nelts * ngx_pagesize / 4;
+    buffer_size = ngx_align(buffer_size, ngx_pagesize) + ngx_pagesize;
+
+    b = ngx_create_temp_buf(r->pool, buffer_size);
     if (b == NULL) {
         return NGX_HTTP_INTERNAL_SERVER_ERROR;
     }
@@ -1670,7 +1686,7 @@ ngx_http_upstream_check_status_handler(ngx_http_request_t *r)
     out.buf = b;
     out.next = NULL;
 
-    b->last = ngx_sprintf(b->last,
+    b->last = ngx_snprintf(b->last, b->end - b->last,
             "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\n"
             "\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
             "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
@@ -1694,7 +1710,7 @@ ngx_http_upstream_check_status_handler(ngx_http_request_t *r)
             peers->peers.nelts, ngx_http_check_shm_generation);
 
     for (i = 0; i < peers->peers.nelts; i++) {
-        b->last = ngx_sprintf(b->last,
+        b->last = ngx_snprintf(b->last, b->end - b->last,
                 "  <tr%s>\n"
                 "    <td>%ui</td>\n"
                 "    <td>%V</td>\n"
@@ -1714,7 +1730,7 @@ ngx_http_upstream_check_status_handler(ngx_http_request_t *r)
                 peer[i].conf->check_type_conf->name);
     }
 
-    b->last = ngx_sprintf(b->last,
+    b->last = ngx_snprintf(b->last, b->end - b->last,
             "</table>\n"
             "</body>\n"
             "</html>\n");

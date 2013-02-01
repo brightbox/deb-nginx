@@ -1,4 +1,4 @@
-nginx (1:1.2.6-2bbox1) precise; urgency=low
+nginx (1:1.2.6-2bbox1+ng) precise; urgency=low
 
   [ Kartik Mistry ]
   * debian/logrotate:

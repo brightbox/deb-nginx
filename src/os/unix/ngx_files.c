@@ -139,7 +139,7 @@ ngx_open_tempfile(u_char *name, ngx_uint_t persistent, ngx_uint_t access)
               access ? access : 0600);
 
     if (fd != -1 && !persistent) {
-        unlink((const char *) name);
+        (void) unlink((const char *) name);
     }
 
     return fd;
@@ -241,8 +241,12 @@ ngx_write_chain_to_file(ngx_file_t *file, ngx_chain_t *cl, off_t offset,
             return NGX_ERROR;
         }
 
+        ngx_log_debug2(NGX_LOG_DEBUG_CORE, file->log, 0,
+                       "writev: %d, %z", file->fd, n);
+
         file->sys_offset += n;
         file->offset += n;
+        offset += n;
         total += n;
 
     } while (cl);

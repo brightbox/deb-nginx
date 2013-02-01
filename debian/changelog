@@ -1,3 +1,99 @@
+nginx (1.2.6-2) UNRELEASED; urgency=low
+
+  [ Kartik Mistry ]
+  * debian/logrotate:
+    + Set default log to keep for 52 weeks instead of 52 days. Thanks to
+      RjY <rjy@users.sourceforge.net> for patch (Closes: #696440)
+  * debian/rules:
+    + Added cache purge module to nginx-extras.
+
+ -- Kartik Mistry <kartik@debian.org>  Wed, 16 Jan 2013 10:50:33 +0530
+
+nginx (1.2.6-1) unstable; urgency=low
+
+  [ Kartik Mistry ]
+  * New upstream release.
+  * debian/nginx-common.nginx.init:
+    + Used log_*_msg instead of echo for better init messages.
+    + Added patch to check start-stop-daemon exit status, Thanks to
+      Sergey B Kirpichev <skirpichev@gmail.com> (Closes: #695374).
+  * debian/po/ja.po:
+    + Added new Japanese translation. Thanks to victory <victory.deb@gmail.com>
+      (Closes: #692481).
+  * debian/po/pt_BR.po:
+    + Added new Brazilian Portuguese translation. Thanks to
+      Adriano Rafael Gomes <adrianorg@gmail.com> (Closes: #692481).
+
+  [ Cyril Lavier ]
+  * debian/rules
+    + Added RealIP module in nginx-naxsi (Closes: #693302).
+  * debian/modules/nginx-cache-purge/
+    + Updated nginx-cache-purge module with the 2.0 version.
+  * debian/modules/nginx-lua/
+    + Updated nginx-lua module with the 0.7.8 version.
+  * debian/modules/nginx-echo/
+    + Updated the nginx-echo module with the 0.41 version.
+  * debian/modules/headers-more-nginx-module/
+    + Updated the Headers-more module with the 0.19 version.
+  * debian/modules/README.Modules-versions
+    + Updated the current version of modules following the updates.
+
+  [ Michael Lustfield ]
+  * debian/conf/sites-available/default
+    + Uncommented listen lines to make server block default.
+
+ -- Kartik Mistry <kartik@debian.org>  Tue, 18 Dec 2012 10:29:18 +0530
+
+nginx (1.2.4-2) unstable; urgency=low
+
+  * debian/conf/nginx.conf:
+    + Fixed pid path to /run/nginx.pid in config.
+  * debian/po/*.po, debian/nginx-naxsi-ui.templates, debian/po/templates.pot:
+    + Fixed ^M characters in template file. Thanks to Christian Perrier
+      <bubulle@debian.org> for help (Closes: #692191, #692335)
+
+ -- Kartik Mistry <kartik@debian.org>  Mon, 05 Nov 2012 13:05:34 +0530
+
+nginx (1.2.4-1) unstable; urgency=low
+
+  [ Michael Lustfield ]
+  * debian/nginx-common.nginx.init
+    + Added --retry to start-stop-daemon. (Closes: #682360)
+    + Added $named to Required-Start/Stop. (Closes: #679879)
+    + Added some other modifications after testing. (LP: #1033856)
+  * debian/rules:
+    + Added -DFORTIFY_SOURCE=2 -fstack-protector to build flags.
+      (Closes: #680712)
+  * debian/nginx-common.install:
+    + Moved default docs to /usr/share/nginx/html. (Closes: #1031515)
+  * debian/rules:
+    + Set prefix to /usr/share/nginx.
+  * debian/po/fr.po
+    + Updated French translation file. (Closes: #679601)
+  * debian/logrotate:
+    + Removed semicolon after an fi statement. (Closes: #683870)
+  * debian/copyright:
+    + Removed trailing slash from File: fields.
+  * Changed /var/run to /run in multiple files. (LP: #1050516)
+  * debian/nginx-common.dirs:
+    + Added /run to .dirs to avoid conflicts with backports. (LP: #1072641)
+  * debian/nginx-*.postinst:
+    + Added sites-enabled/available directory checks. (Closes: #688410)
+      - Thanks Andreas Marschke <andreas.marschke@gmail.com>
+    + Moved the symlink creation to nginx-common.
+  * Updated debconf templates.
+  * conf/sites-available/default:
+    + Updated root to point at /usr/share/nginx/html instead of www.
+
+  [ Kartik Mistry ]
+  * Acknowledged NMUs (Closes: #681758, #681381)
+  * New upstream release (Closes: #683704)
+  * debian/po/*.po:
+    + Removed ^M characters from headers.
+    + Fixed all files with recent unneeded template change.
+
+ -- Kartik Mistry <kartik@debian.org>  Tue, 30 Oct 2012 10:10:34 +0530
+
 nginx (1:1.2.3-1bbox1) precise; urgency=low
 
   * New upstream release, 1.2.3
@@ -17,28 +113,6 @@ nginx (1:1.2.2-1bbox1) precise; urgency=low
   * New upstream version of Passenger, 3.0.14
 
  -- John Leach <john@brightbox.co.uk>  Fri, 27 Jul 2012 16:31:22 +0100
-
-nginx (1.2.2-0) UNRELEASED; urgency=medium
-
-  * New upstream release. (Closes: #683704)
-  * debian/nginx-common.nginx.init
-    + Added --retry to start-stop-daemon. (Closes: #682360)
-    + Added $named to Required-Start/Stop. (Closes: #679879)
-    + Added some other modifications after testing. (LP: #1033856)
-  * debian/rules:
-    + Added -DFORTIFY_SOURCE=2 -fstack-protector to build flags. (Closes: #680712)
-  * debian/nginx-common.install:
-    + Moved default docs to /usr/share/nginx/html. (Closes: #1031515)
-  * debian/rules:
-    + Set prefix to /usr/share/nginx.
-  * debian/po/fr.po
-    + Updated French translation file. (Closes: #679601)
-  * debian/logrotate:
-    + Removed semicolon after an fi statement. (Closes: #683870)
-  * debian/copyright:
-    + Removed trailing slash from File: fields.
-
- -- Michael Lustfield <michael@lustfield.net>  Wed, 08 Aug 2012 23:43:38 +0000
 
 nginx (1.2.1-2.2) unstable; urgency=low
 

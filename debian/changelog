@@ -1,3 +1,9 @@
+nginx (1:1.2.6-2bbox2) precise; urgency=low
+
+  * Fix broken listen line in default config
+
+ -- John Leach <john@brightbox.co.uk>  Wed, 06 Feb 2013 17:20:34 +0000
+
 nginx (1:1.2.6-2bbox1) precise; urgency=low
 
   [ Kartik Mistry ]
